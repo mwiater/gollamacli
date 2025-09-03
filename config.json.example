@@ -1,0 +1,21 @@
+{
+  "hosts": [
+    {
+      "name": "Ollama01",
+      "url": "https://ol01.your-ollama-api.com"
+    },
+    {
+      "name": "Ollama02",
+      "url": "https://ol02.your-ollama-api.com"
+    },
+    {
+      "name": "Ollama03",
+      "url": "https://ol03.your-ollama-api.com"
+    },
+    {
+      "name": "Ollama04",
+      "url": "https://ol04.your-ollama-api.com"
+    }
+  ],
+  "debug": true
+}
