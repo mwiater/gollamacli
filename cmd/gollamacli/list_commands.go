@@ -1,11 +1,11 @@
-// cmd/gollama/list_commands.go
+// cmd/gollamacli/list_commands.go
 
 /*
 Package cmd contains the root command and all subcommand implementations.
 This file defines the 'list commands' subcommand, which provides
 a way to list all available commands and subcommands in a hierarchical format.
 */
-package cmd
+package gollamacli
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 )
 
 // commandsCmd represents the 'list commands' subcommand.
-// It lists all available commands and subcommands of the gollama tool
+// It lists all available commands and subcommands of the gollamacli tool
 // in a hierarchical, indented format with two-column alignment.
 var commandsCmd = &cobra.Command{
 	Use:   "commands",
@@ -26,7 +26,7 @@ The first column displays the command path, and the second column shows the
 short description of each command.
 
 This provides a comprehensive overview of all the actions that can be performed
-by the gollama tool, with a clear and aligned output.`,
+by the gollamacli tool, with a clear and aligned output.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		listAllCommands(rootCmd) // Call the listing function without initial indent
 	},

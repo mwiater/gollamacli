@@ -1,6 +1,6 @@
-// cmd/gollama/root.go
+// cmd/gollamacli/root.go
 
-package cmd
+package gollamacli
 
 import (
 	"fmt"
@@ -9,13 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd is the base command for the gollama application.
+// rootCmd is the base command for the gollamacli application.
 // It provides the core command line interface for building and running instrumented versions of Go applications.
 // The command holds the primary configuration, usage details, and a detailed description of the application's purpose.
 var rootCmd = &cobra.Command{
-	Use:   "gollama",
-	Short: "gollama",
-	Long:  `gollama`,
+	Use:   "gollamacli",
+	Short: "gollamacli",
+	Long:  `gollamacli`,
 }
 
 // Execute executes the root command along with any registered subcommands.

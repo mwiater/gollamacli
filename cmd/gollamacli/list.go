@@ -1,11 +1,11 @@
-// cmd/gollama/list.go
+// cmd/gollamacli/list.go
 
 /*
 Package cmd contains the root command and all subcommand implementations.
 This file specifically defines the 'list' command, which acts as a parent
 command to group listing related subcommands.
 */
-package cmd
+package gollamacli
 
 import (
 	"github.com/spf13/cobra"
@@ -18,7 +18,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Group commands for listing resources",
 	Long: `The 'list' command is used to group subcommands that provide
-different ways to list resources or information related to gollama.
+different ways to list resources or information related to gollamacli.
 It does not perform any actions on its own but serves as a namespace
 for more specific listing commands.`,
 	// No Run functionality; this command exists solely to group subcommands.

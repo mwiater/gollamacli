@@ -1,6 +1,6 @@
-# Gollama CLI
+# gollamacli CLI
 
-Gollama CLI is a terminal-based application for interacting with large language models through the Ollama API. It provides a user-friendly interface for selecting a host, choosing a model, and engaging in a conversation.
+gollamacli CLI is a terminal-based application for interacting with large language models through the Ollama API. It provides a user-friendly interface for selecting a host, choosing a model, and engaging in a conversation.
 
 ## Configuration
 

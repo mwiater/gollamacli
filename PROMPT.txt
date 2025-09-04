@@ -1,0 +1,8 @@
+I need a single-page golang file called: sync_models.go
+
+* It should combine the functionality of scripts/pull_models.sh and scripts/delete_models.sh
+* It should run everything through a single function: SyncModels()
+* SyncModels should call 2 functions: DeleteModels() and PullModels()
+* I should be able to call these indvdally: DeleteModels(), PullModels(), SyncModels()
+
+Overall will read MODELS.TXT and pull any models that don't exist and delete any models that are not on the list as it iterates through each node in NODES.TXT
