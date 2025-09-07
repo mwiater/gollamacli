@@ -22,7 +22,7 @@ const (
 // Config represents the application's configuration.
 type Config struct {
 	// Nodes is a list of Ollama nodes.
-	Nodes  []string `json:"nodes"`
+	Nodes []string `json:"nodes"`
 	// Models is a list of models to manage.
 	Models []string `json:"models"`
 }
@@ -197,7 +197,7 @@ func ListModels() {
 		fmt.Println(nodeStyle.Render(fmt.Sprintf("%s:", node)))
 		for _, model := range nodeModels[node] {
 			cleanedModelString := strings.TrimSpace(strings.ReplaceAll(model, "-", ""))
-			fmt.Println("  >>>, " + cleanedModelString)
+			fmt.Println("  >>> " + cleanedModelString)
 		}
 		fmt.Println()
 	}
