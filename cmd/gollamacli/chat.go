@@ -1,5 +1,3 @@
-// cmd/gollamacli/chat.go
-
 package gollamacli
 
 import (

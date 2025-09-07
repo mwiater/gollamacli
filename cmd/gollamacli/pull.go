@@ -1,5 +1,3 @@
-// cmd/gollamacli/pull.go
-
 package gollamacli
 
 import (

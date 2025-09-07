@@ -1,5 +1,3 @@
-// cmd/gollamacli/sync.go
-
 package gollamacli
 
 import (

@@ -15,14 +15,19 @@ import (
 )
 
 const (
+	// configFile is the name of the configuration file.
 	configFile = "config.json"
 )
 
+// Config represents the application's configuration.
 type Config struct {
+	// Nodes is a list of Ollama nodes.
 	Nodes  []string `json:"nodes"`
+	// Models is a list of models to manage.
 	Models []string `json:"models"`
 }
 
+// loadConfig reads and parses the configuration file.
 func loadConfig() (Config, error) {
 	var config Config
 	file, err := os.Open(configFile)
@@ -60,6 +65,7 @@ func PullModels() {
 	fmt.Println("All model pull commands have finished.")
 }
 
+// pullModel pulls a model to a single node.
 func pullModel(node, model string) {
 	url := fmt.Sprintf("https://%s/api/pull", node)
 	payload := map[string]string{"name": model}
@@ -90,6 +96,7 @@ func DeleteModels() {
 	fmt.Println("All model cleanup commands have finished.")
 }
 
+// deleteModelsOnNode deletes any models not on the list from a single node.
 func deleteModelsOnNode(node string, modelsToKeep []string) {
 	fmt.Printf("Starting model cleanup for %s...\n", node)
 	url := fmt.Sprintf("https://%s/api/tags", node)
@@ -131,6 +138,7 @@ func deleteModelsOnNode(node string, modelsToKeep []string) {
 	}
 }
 
+// deleteModel deletes a model from a single node.
 func deleteModel(node, model string) {
 	url := fmt.Sprintf("https://%s/api/delete", node)
 	payload := map[string]string{"model": model}
@@ -189,23 +197,22 @@ func ListModels() {
 		fmt.Println(nodeStyle.Render(fmt.Sprintf("%s:", node)))
 		for _, model := range nodeModels[node] {
 			cleanedModelString := strings.TrimSpace(strings.ReplaceAll(model, "-", ""))
-			fmt.Println("  >>>", cleanedModelString)
+			fmt.Println("  >>>, " + cleanedModelString)
 		}
 		fmt.Println()
 	}
 }
 
+// listModelsOnNode gets the models on a single node.
 func listModelsOnNode(node string) ([]string, error) {
 	modelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
 	loadedModelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
 
-	// Get running models
 	runningModels, err := getRunningModels(node)
 	if err != nil {
 		return nil, fmt.Errorf("could not get running models: %v", err)
 	}
 
-	// Get all installed models
 	url := fmt.Sprintf("https://%s/api/tags", node)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -238,6 +245,7 @@ func listModelsOnNode(node string) ([]string, error) {
 	return models, nil
 }
 
+// getRunningModels gets the running models on a single node.
 func getRunningModels(node string) (map[string]struct{}, error) {
 	runningModels := make(map[string]struct{})
 	url := fmt.Sprintf("https://%s/api/ps", node)

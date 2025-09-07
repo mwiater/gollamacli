@@ -1,5 +1,3 @@
-// cmd/gollamacli/pull_models.go
-
 package gollamacli
 
 import (

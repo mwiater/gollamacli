@@ -1,5 +1,3 @@
-// cmd/gollamacli/delete.go
-
 package gollamacli
 
 import (

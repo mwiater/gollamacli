@@ -1,10 +1,3 @@
-// cmd/gollamacli/list_commands.go
-
-/*
-Package cmd contains the root command and all subcommand implementations.
-This file defines the 'list commands' subcommand, which provides
-a way to list all available commands and subcommands in a hierarchical format.
-*/
 package gollamacli
 
 import (

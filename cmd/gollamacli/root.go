@@ -1,5 +1,3 @@
-// cmd/gollamacli/root.go
-
 package gollamacli
 
 import (

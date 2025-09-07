@@ -1,10 +1,3 @@
-// cmd/gollamacli/list.go
-
-/*
-Package cmd contains the root command and all subcommand implementations.
-This file specifically defines the 'list' command, which acts as a parent
-command to group listing related subcommands.
-*/
 package gollamacli
 
 import (

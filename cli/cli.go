@@ -23,15 +23,19 @@ import (
 
 // Host represents a language model host with a name and URL.
 type Host struct {
-	Name string `json:"name"` // Name of the host, e.g., "Local Ollama"
-	URL  string `json:"url"`  // URL of the host, e.g., "http://localhost:11434"
+	// Name of the host, e.g., "Local Ollama"
+	Name string `json:"name"`
+	// URL of the host, e.g., "http://localhost:11434"
+	URL  string `json:"url"`
 }
 
 // Config holds the application's configuration, including a list of language model hosts
 // and a debug flag.
 type Config struct {
-	Hosts []Host `json:"hosts"` // List of available language model hosts.
-	Debug bool   `json:"debug"` // Debug flag; if true, additional debug information is displayed.
+	// List of available language model hosts.
+	Hosts []Host `json:"hosts"`
+	// Debug flag; if true, additional debug information is displayed.
+	Debug bool   `json:"debug"`
 }
 
 // loadConfig reads and parses the configuration file from the given path.
@@ -55,91 +59,139 @@ func loadConfig(path string) (*Config, error) {
 // LLMResponseMeta contains metadata about a language model's response,
 // including performance metrics and model details.
 type LLMResponseMeta struct {
-	Model              string    `json:"model"`                // Name of the language model used.
-	CreatedAt          time.Time `json:"created_at"`           // Timestamp when the response was created.
-	Done               bool      `json:"done"`                 // Indicates if the response stream is complete.
-	TotalDuration      int64     `json:"total_duration"`       // Total duration of the request in nanoseconds.
-	LoadDuration       int64     `json:"load_duration"`        // Duration spent loading the model in nanoseconds.
-	PromptEvalCount    int       `json:"prompt_eval_count"`    // Number of tokens in the prompt evaluated.
-	PromptEvalDuration int64     `json:"prompt_eval_duration"` // Duration spent evaluating the prompt in nanoseconds.
-	EvalCount          int       `json:"eval_count"`           // Number of tokens in the response evaluated.
-	EvalDuration       int64     `json:"eval_duration"`        // Duration spent evaluating the response in nanoseconds.
+	// Name of the language model used.
+	Model              string    `json:"model"`
+	// Timestamp when the response was created.
+	CreatedAt          time.Time `json:"created_at"`
+	// Indicates if the response stream is complete.
+	Done               bool      `json:"done"`
+	// Total duration of the request in nanoseconds.
+	TotalDuration      int64     `json:"total_duration"`
+	// Duration spent loading the model in nanoseconds.
+	LoadDuration       int64     `json:"load_duration"`
+	// Number of tokens in the prompt evaluated.
+	PromptEvalCount    int       `json:"prompt_eval_count"`
+	// Duration spent evaluating the prompt in nanoseconds.
+	PromptEvalDuration int64     `json:"prompt_eval_duration"`
+	// Number of tokens in the response evaluated.
+	EvalCount          int       `json:"eval_count"`
+	// Duration spent evaluating the response in nanoseconds.
+	EvalDuration       int64     `json:"eval_duration"`
 }
 
 // chatMessage represents a single message in a chat conversation,
 // including the role of the sender (e.g., "user", "assistant") and the content of the message.
 type chatMessage struct {
-	Role    string `json:"role"`    // Role of the message sender (e.g., "user", "assistant").
-	Content string `json:"content"` // Content of the message.
+	// Role of the message sender (e.g., "user", "assistant").
+	Role    string `json:"role"`
+	// Content of the message.
+	Content string `json:"content"`
 }
 
 // streamChunk represents a single chunk of a streaming language model response.
 // It includes partial message content and updated metadata.
 type streamChunk struct {
-	Model   string `json:"model"` // Name of the language model.
+	// Name of the language model.
+	Model   string `json:"model"`
 	Message struct {
-		Role    string `json:"role"`    // Role of the message sender within this chunk.
-		Content string `json:"content"` // Partial content of the message.
+		// Role of the message sender within this chunk.
+		Role    string `json:"role"`
+		// Partial content of the message.
+		Content string `json:"content"`
 	} `json:"message"`
-	Done               bool  `json:"done"`                 // Indicates if this is the final chunk of the stream.
-	TotalDuration      int64 `json:"total_duration"`       // Total duration up to this chunk in nanoseconds.
-	LoadDuration       int64 `json:"load_duration"`        // Duration spent loading the model up to this chunk in nanoseconds.
-	PromptEvalCount    int   `json:"prompt_eval_count"`    // Number of tokens in the prompt evaluated up to this chunk.
-	PromptEvalDuration int64 `json:"prompt_eval_duration"` // Duration spent evaluating the prompt up to this chunk in nanoseconds.
-	EvalCount          int   `json:"eval_count"`           // Number of tokens in the response evaluated up to this chunk.
-	EvalDuration       int64 `json:"eval_duration"`        // Duration spent evaluating the response up to this chunk in nanoseconds.
+	// Indicates if this is the final chunk of the stream.
+	Done               bool  `json:"done"`
+	// Total duration up to this chunk in nanoseconds.
+	TotalDuration      int64 `json:"total_duration"`
+	// Duration spent loading the model up to this chunk in nanoseconds.
+	LoadDuration       int64 `json:"load_duration"`
+	// Number of tokens in the prompt evaluated up to this chunk.
+	PromptEvalCount    int   `json:"prompt_eval_count"`
+	// Duration spent evaluating the prompt up to this chunk in nanoseconds.
+	PromptEvalDuration int64 `json:"prompt_eval_duration"`
+	// Number of tokens in the response evaluated up to this chunk.
+	EvalCount          int   `json:"eval_count"`
+	// Duration spent evaluating the response up to this chunk in nanoseconds.
+	EvalDuration       int64 `json:"eval_duration"`
 }
 
 // ollamaTagsResponse represents the structure of the response from the Ollama /api/tags endpoint,
 // which lists available models.
 type ollamaTagsResponse struct {
+	// List of models.
 	Models []struct {
-		Name string `json:"name"` // Name of the model.
-	} `json:"models"` // List of models.
+		// Name of the model.
+		Name string `json:"name"`
+	} `json:"models"`
 }
 
 // ollamaPsResponse represents the structure of the response from the Ollama /api/ps endpoint,
 // which lists currently loaded models.
 type ollamaPsResponse struct {
+	// List of currently loaded models.
 	Models []struct {
-		Name string `json:"name"` // Name of the loaded model.
-	} `json:"models"` // List of currently loaded models.
+		// Name of the loaded model.
+		Name string `json:"name"`
+	} `json:"models"`
 }
 
 // viewState represents the current state of the application's view.
 type viewState int
 
 const (
-	viewHostSelector  viewState = iota // viewHostSelector is the state where the user selects a host.
-	viewModelSelector                  // viewModelSelector is the state where the user selects a model.
-	viewLoadingChat                    // viewLoadingChat is the state while a model is being loaded for chat.
-	viewChat                           // viewChat is the state where the user is interacting with the chat.
+	// viewHostSelector is the state where the user selects a host.
+	viewHostSelector viewState = iota
+	// viewModelSelector is the state where the user selects a model.
+	viewModelSelector
+	// viewLoadingChat is the state while a model is being loaded for chat.
+	viewLoadingChat
+	// viewChat is the state where the user is interacting with the chat.
+	viewChat
 )
 
 // model is the main application model for the Bubble Tea UI.
 // It holds all the necessary state for the chat application.
 type model struct {
-	config    *Config      // Application configuration.
-	client    *http.Client // HTTP client for API requests.
-	state     viewState    // Current view state of the application.
-	isLoading bool         // Indicates if an asynchronous operation is in progress.
-	err       error        // Stores any error encountered during operations.
+	// Application configuration.
+	config    *Config
+	// HTTP client for API requests.
+	client    *http.Client
+	// Current view state of the application.
+	state     viewState
+	// Indicates if an asynchronous operation is in progress.
+	isLoading bool
+	// Stores any error encountered during operations.
+	err       error
 
-	hostList      list.Model      // Bubble Tea list model for host selection.
-	modelList     list.Model      // Bubble Tea list model for model selection.
-	textArea      textarea.Model  // Bubble Tea textarea model for user input.
-	viewport      viewport.Model  // Bubble Tea viewport model for displaying chat history.
-	spinner       spinner.Model   // Bubble Tea spinner model for indicating loading.
-	chatHistory   []chatMessage   // Stores the history of chat messages.
-	responseBuf   strings.Builder // Buffer to accumulate streaming responses.
-	responseMeta  LLMResponseMeta // Metadata of the last language model response.
-	selectedHost  Host            // The currently selected host.
-	selectedModel string          // The currently selected model.
-	loadedModels  []string        // List of models currently loaded on the selected host.
+	// Bubble Tea list model for host selection.
+	hostList      list.Model
+	// Bubble Tea list model for model selection.
+	modelList     list.Model
+	// Bubble Tea textarea model for user input.
+	textArea      textarea.Model
+	// Bubble Tea viewport model for displaying chat history.
+	viewport      viewport.Model
+	// Bubble Tea spinner model for indicating loading.
+	spinner       spinner.Model
+	// Stores the history of chat messages.
+	chatHistory   []chatMessage
+	// Buffer to accumulate streaming responses.
+	responseBuf   strings.Builder
+	// Metadata of the last language model response.
+	responseMeta  LLMResponseMeta
+	// The currently selected host.
+	selectedHost  Host
+	// The currently selected model.
+	selectedModel string
+	// List of models currently loaded on the selected host.
+	loadedModels  []string
 
-	width, height    int          // Current width and height of the terminal.
-	program          *tea.Program // Reference to the Bubble Tea program.
-	requestStartTime time.Time    // Timestamp when the last request started.
+	// Current width and height of the terminal.
+	width, height    int
+	// Reference to the Bubble Tea program.
+	program          *tea.Program
+	// Timestamp when the last request started.
+	requestStartTime time.Time
 }
 
 // initialModel initializes a new model with default values and sets up
@@ -187,9 +239,12 @@ func initialModel(cfg *Config) *model {
 // item represents a selectable item in a Bubble Tea list,
 // used for both hosts and models.
 type item struct {
-	title  string // The main title of the item.
-	desc   string // A short description of the item.
-	loaded bool   // Indicates if the model is currently loaded (only applicable for model items).
+	// The main title of the item.
+	title  string
+	// A short description of the item.
+	desc   string
+	// Indicates if the model is currently loaded (only applicable for model items).
+	loaded bool
 }
 
 // Title returns the title of the list item.
@@ -239,25 +294,21 @@ type tickMsg time.Time
 // by placing them at the top of the list.
 func fetchAndSelectModelsCmd(host Host, client *http.Client) tea.Cmd {
 	return func() tea.Msg {
-		// First, get the list of currently loaded models from /api/ps
 		loadedModels, err := getLoadedModels(host, client)
 		if err != nil {
 			return modelsLoadErr(err)
 		}
 
-		// Then, get the list of all available models from /api/tags
 		allModels, err := getAllModels(host, client)
 		if err != nil {
 			return modelsLoadErr(err)
 		}
 
-		// Create a set of loaded model names for quick lookups
 		loadedModelSet := make(map[string]struct{})
 		for _, m := range loadedModels {
 			loadedModelSet[m] = struct{}{}
 		}
 
-		// Create the final list of model items, separating loaded models
 		var loadedItems []list.Item
 		var otherItems []list.Item
 		for _, m := range allModels {
@@ -270,7 +321,6 @@ func fetchAndSelectModelsCmd(host Host, client *http.Client) tea.Cmd {
 			}
 		}
 
-		// Prepend loaded models to the list so they appear first
 		finalModelItems := append(loadedItems, otherItems...)
 
 		return modelsReadyMsg{
@@ -334,7 +384,7 @@ func getAllModels(host Host, client *http.Client) ([]struct{ Name string }, erro
 		return nil, err
 	}
 
-	var tagsResp ollamaTagsResponse
+	tagsResp := ollamaTagsResponse{}
 	if err := json.Unmarshal(body, &tagsResp); err != nil {
 		return nil, err
 	}
@@ -500,7 +550,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.loadedModels = msg.loadedModels
 		m.modelList.Title = fmt.Sprintf("Select a Model from %s", m.selectedHost.Name)
 		m.state = viewModelSelector
-		// If there are any loaded models, the first one in the list is auto-selected.
 		if len(m.loadedModels) > 0 {
 			m.modelList.Select(0)
 		}
@@ -712,8 +761,8 @@ func formatMeta(meta LLMResponseMeta) string {
 	))
 }
 
+// StartGUI starts the graphical user interface for the chat application.
 func StartGUI() {
-	// Open a log file for debugging
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {
 		log.Fatalf("could not open log file: %v", err)

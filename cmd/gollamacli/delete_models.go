@@ -1,5 +1,3 @@
-// cmd/gollamacli/delete_models.go
-
 package gollamacli
 
 import (
