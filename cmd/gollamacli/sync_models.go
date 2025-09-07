@@ -8,8 +8,8 @@ import (
 // syncModelsCmd represents the 'sync models' subcommand.
 var syncModelsCmd = &cobra.Command{
 	Use:   "models",
-	Short: "Sync all models from the models.txt file",
-	Long:  `The 'models' subcommand syncs all models from the models.txt file.`,
+	Short: "Sync all models from the config.json file",
+	Long:  `The 'models' subcommand syncs all models from the config.json file.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		models.SyncModels()
 	},

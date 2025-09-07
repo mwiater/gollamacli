@@ -1,58 +1,56 @@
 package models
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"sort"
+	"strings"
 	"sync"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
-	nodesFile  = "NODES.TXT"
-	modelsFile = "MODELS.TXT"
+	configFile = "config.json"
 )
 
-// readLines reads a file and returns its lines as a slice of strings.
-func readLines(path string) ([]string, error) {
-	file, err := os.Open(path)
+type Config struct {
+	Nodes  []string `json:"nodes"`
+	Models []string `json:"models"`
+}
+
+func loadConfig() (Config, error) {
+	var config Config
+	file, err := os.Open(configFile)
 	if err != nil {
-		return nil, err
+		return config, err
 	}
 	defer file.Close()
 
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines, scanner.Err()
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&config)
+	return config, err
 }
 
-// PullModels reads models from MODELS.TXT and pulls them to each node in NODES.TXT.
+// PullModels reads models from config.json and pulls them to each node.
 func PullModels() {
-	nodes, err := readLines(nodesFile)
+	config, err := loadConfig()
 	if err != nil {
-		fmt.Printf("Error reading %s: %v\n", nodesFile, err)
-		return
-	}
-
-	models, err := readLines(modelsFile)
-	if err != nil {
-		fmt.Printf("Error reading %s: %v\n", modelsFile, err)
+		fmt.Printf("Error reading %s: %v\n", configFile, err)
 		return
 	}
 
 	var wg sync.WaitGroup
-	for _, node := range nodes {
+	for _, node := range config.Nodes {
 		wg.Add(1)
 		go func(node string) {
 			defer wg.Done()
 			fmt.Printf("Starting model pulls for %s...\n", node)
-			for _, model := range models {
+			for _, model := range config.Models {
 				fmt.Printf("  -> Pulling model: %s on %s\n", model, node)
 				pullModel(node, model)
 			}
@@ -72,26 +70,20 @@ func pullModel(node, model string) {
 	}
 }
 
-// DeleteModels reads MODELS.TXT and deletes any models not on the list from each node in NODES.TXT.
+// DeleteModels reads config.json and deletes any models not on the list from each node.
 func DeleteModels() {
-	nodes, err := readLines(nodesFile)
+	config, err := loadConfig()
 	if err != nil {
-		fmt.Printf("Error reading %s: %v\n", nodesFile, err)
-		return
-	}
-
-	modelsToKeep, err := readLines(modelsFile)
-	if err != nil {
-		fmt.Printf("Error reading %s: %v\n", modelsFile, err)
+		fmt.Printf("Error reading %s: %v\n", configFile, err)
 		return
 	}
 
 	var wg sync.WaitGroup
-	for _, node := range nodes {
+	for _, node := range config.Nodes {
 		wg.Add(1)
 		go func(node string) {
 			defer wg.Done()
-			deleteModelsOnNode(node, modelsToKeep)
+			deleteModelsOnNode(node, config.Models)
 		}(node)
 	}
 	wg.Wait()
@@ -155,4 +147,123 @@ func deleteModel(node, model string) {
 func SyncModels() {
 	DeleteModels()
 	PullModels()
+}
+
+// ListModels lists all models on each node, indicating which are currently loaded.
+func ListModels() {
+	config, err := loadConfig()
+	if err != nil {
+		fmt.Printf("Error reading %s: %v\n", configFile, err)
+		return
+	}
+
+	nodeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
+
+	nodeModels := make(map[string][]string)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	for _, node := range config.Nodes {
+		wg.Add(1)
+		go func(node string) {
+			defer wg.Done()
+			models, err := listModelsOnNode(node)
+			mu.Lock()
+			if err != nil {
+				nodeModels[node] = []string{fmt.Sprintf("Error: %v", err)}
+			} else {
+				nodeModels[node] = models
+			}
+			mu.Unlock()
+		}(node)
+	}
+	wg.Wait()
+
+	var sortedNodes []string
+	for node := range nodeModels {
+		sortedNodes = append(sortedNodes, node)
+	}
+	sort.Strings(sortedNodes)
+
+	for _, node := range sortedNodes {
+		fmt.Println(nodeStyle.Render(fmt.Sprintf("%s:", node)))
+		for _, model := range nodeModels[node] {
+			cleanedModelString := strings.TrimSpace(strings.ReplaceAll(model, "-", ""))
+			fmt.Println("  >>>", cleanedModelString)
+		}
+		fmt.Println()
+	}
+}
+
+func listModelsOnNode(node string) ([]string, error) {
+	modelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
+	loadedModelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
+
+	// Get running models
+	runningModels, err := getRunningModels(node)
+	if err != nil {
+		return nil, fmt.Errorf("could not get running models: %v", err)
+	}
+
+	// Get all installed models
+	url := fmt.Sprintf("https://%s/api/tags", node)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("could not list models: Ollama is not accessible on %s", node)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body from %s: %v", node, err)
+	}
+
+	var tagsResp struct {
+		Models []struct {
+			Name string `json:"name"`
+		} `json:"models"`
+	}
+	if err := json.Unmarshal(body, &tagsResp); err != nil {
+		return nil, fmt.Errorf("error parsing models from %s: %v", node, err)
+	}
+
+	var models []string
+	for _, model := range tagsResp.Models {
+		if _, ok := runningModels[model.Name]; ok {
+			models = append(models, loadedModelStyle.Render(fmt.Sprintf("- %s (CURRENTLY LOADED)", model.Name)))
+		} else {
+			models = append(models, modelStyle.Render(fmt.Sprintf("- %s", model.Name)))
+		}
+	}
+	return models, nil
+}
+
+func getRunningModels(node string) (map[string]struct{}, error) {
+	runningModels := make(map[string]struct{})
+	url := fmt.Sprintf("https://%s/api/ps", node)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var psResp struct {
+		Models []struct {
+			Name string `json:"name"`
+		} `json:"models"`
+	}
+	if err := json.Unmarshal(body, &psResp); err != nil {
+		return nil, err
+	}
+
+	for _, model := range psResp.Models {
+		runningModels[model.Name] = struct{}{}
+	}
+
+	return runningModels, nil
 }

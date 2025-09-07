@@ -1,4 +1,0 @@
-ol01.your-ollama-api.com
-ol02.your-ollama-api.com
-ol03.your-ollama-api.com
-ol04.your-ollama-api.com
