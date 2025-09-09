@@ -13,12 +13,24 @@ Before running the application, you need to create a `config.json` file in the `
   "hosts": [
     {
       "name": "Ollama01",
-      "url": "https://01.your-ollama-server.com"
+      "url": "http://localhost:11434",
+      "type": "ollama"
     },
     {
-      "name": "Ollama02",
-      "url": "https://02.your-ollama-server.com"
+      "name": "LMStudio01",
+      "url": "http://localhost:1234",
+      "type": "lmstudio"
     }
+  ],
+  "models": [
+    "stablelm-zephyr:3b",
+    "granite3.3:2b",
+    "gemma3n:e2b",
+    "deepseek-r1:1.5b",
+    "llama3.2:1b",
+    "granite3.1-moe:1b",
+    "dolphin-phi:2.7b",
+    "qwen3:1.7b"
   ],
   "debug": true
 }
@@ -29,14 +41,18 @@ Before running the application, you need to create a `config.json` file in the `
 *   `hosts`: A list of Ollama hosts to connect to. Each host object should have:
     *   `name`: A user-friendly name for the host (e.g., "Local Ollama", "Work Server").
     *   `url`: The URL of the Ollama API endpoint (e.g., "http://localhost:11434").
+    *   `type`: The type of host, either "ollama" or "lmstudio".
+*   `models`: A list of models to be managed by the tool.
 *   `debug`: A boolean value (`true` or `false`) that toggles debug mode. When enabled, performance metrics are displayed after each response.
 
 ## Usage
 
+### Chat
+
 1.  **Run the application:**
 
     ```bash
-    go run chat.go
+    go run main.go chat
     ```
 
 2.  **Select a Host:**
@@ -51,7 +67,31 @@ Before running the application, you need to create a `config.json` file in the `
     *   The conversation history is displayed above the input area.
     *   The assistant's responses will be streamed to the screen as they are generated.
 
-### Keyboard Shortcuts:
+### Model Management
+
+The following commands are available for managing models:
+
+*   **List Models:** List all models on each node.
+    ```bash
+    go run main.go list models
+    ```
+
+*   **Pull Models:** Pull all models from the `config.json` file to each node.
+    ```bash
+    go run main.go pull models
+    ```
+
+*   **Delete Models:** Delete all models not in the `config.json` file from each node.
+    ```bash
+    go run main.go delete models
+    ```
+
+*   **Sync Models:** Sync all models from the `config.json` file to each node. This will delete any models not in the `config.json` file and pull any missing models.
+    ```bash
+    go run main.go sync models
+    ```
+
+### Keyboard Shortcuts (Chat):
 
 *   `q` or `Ctrl+c`: Quit the application.
 *   `Tab`: Return to the host selection screen from the chat view.
@@ -70,21 +110,3 @@ When `debug` is set to `true` in `config.json`, the following performance metric
 *   **Total Duration:** The total time from sending the request to receiving the full response.
 
 A `debug.log` file is also created to log detailed information about the application's execution.
-
-## Example Usage
-
-```bash
-# Run the application
-go run chat.go
-
-# Select a host from the list
-# Select a model from the list
-
-# Start chatting
-Ask Anything: What is the capital of France?
-
-Assistant: The capital of France is Paris.
-
-# Press 'Tab' to go back to the host selection
-# Press 'q' to quit
-```
