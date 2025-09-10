@@ -26,7 +26,8 @@ type Host struct {
 	// Name of the host, e.g., "Local Ollama"
 	Name string `json:"name"`
 	// URL of the host, e.g., "http://localhost:11434"
-	URL  string `json:"url"`
+	URL    string   `json:"url"`
+	Models []string `json:"models"`
 }
 
 // Config holds the application's configuration, including a list of language model hosts
@@ -299,10 +300,7 @@ func fetchAndSelectModelsCmd(host Host, client *http.Client) tea.Cmd {
 			return modelsLoadErr(err)
 		}
 
-		allModels, err := getAllModels(host, client)
-		if err != nil {
-			return modelsLoadErr(err)
-		}
+		allModels := host.Models
 
 		loadedModelSet := make(map[string]struct{})
 		for _, m := range loadedModels {
@@ -312,8 +310,8 @@ func fetchAndSelectModelsCmd(host Host, client *http.Client) tea.Cmd {
 		var loadedItems []list.Item
 		var otherItems []list.Item
 		for _, m := range allModels {
-			_, isLoaded := loadedModelSet[m.Name]
-			listItem := item{title: m.Name, desc: "Select this model", loaded: isLoaded}
+			_, isLoaded := loadedModelSet[m]
+			listItem := item{title: m, desc: "Select this model", loaded: isLoaded}
 			if isLoaded {
 				loadedItems = append(loadedItems, listItem)
 			} else {
@@ -363,39 +361,7 @@ func getLoadedModels(host Host, client *http.Client) ([]string, error) {
 	return loadedModels, nil
 }
 
-// getAllModels fetches the list of all available models from the /api/tags endpoint.
-func getAllModels(host Host, client *http.Client) ([]struct{ Name string }, error) {
-	req, err := http.NewRequest("GET", host.URL+"/api/tags", nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned non-200 status: %s", resp.Status)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	tagsResp := ollamaTagsResponse{}
-	if err := json.Unmarshal(body, &tagsResp); err != nil {
-		return nil, err
-	}
-
-	models := make([]struct{ Name string }, len(tagsResp.Models))
-	for i, m := range tagsResp.Models {
-		models[i] = struct{ Name string }{Name: m.Name}
-	}
-
-	return models, nil
-}
 
 // loadModelCmd is a Bubble Tea command that attempts to load a specified model
 // on the given host by sending a minimal generate request to /api/generate.

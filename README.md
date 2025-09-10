@@ -14,23 +14,29 @@ Before running the application, you need to create a `config.json` file in the `
     {
       "name": "Ollama01",
       "url": "http://localhost:11434",
-      "type": "ollama"
+      "type": "ollama",
+      "models": [
+        "stablelm-zephyr:3b",
+        "granite3.3:2b",
+        "gemma3n:e2b",
+        "deepseek-r1:1.5b",
+        "llama3.2:1b",
+        "granite3.1-moe:1b",
+        "dolphin-phi:2.7b",
+        "qwen3:1.7b"
+      ]
     },
     {
       "name": "LMStudio01",
       "url": "http://localhost:1234",
-      "type": "lmstudio"
+      "type": "lmstudio",
+      "models": [
+        "stablelm-zephyr:3b",
+        "granite3.3:2b",
+        "dolphin-phi:2.7b",
+        "qwen3:1.7b"
+      ]
     }
-  ],
-  "models": [
-    "stablelm-zephyr:3b",
-    "granite3.3:2b",
-    "gemma3n:e2b",
-    "deepseek-r1:1.5b",
-    "llama3.2:1b",
-    "granite3.1-moe:1b",
-    "dolphin-phi:2.7b",
-    "qwen3:1.7b"
   ],
   "debug": true
 }
@@ -42,7 +48,7 @@ Before running the application, you need to create a `config.json` file in the `
     *   `name`: A user-friendly name for the host (e.g., "Local Ollama", "Work Server").
     *   `url`: The URL of the Ollama API endpoint (e.g., "http://localhost:11434").
     *   `type`: The type of host, either "ollama" or "lmstudio".
-*   `models`: A list of models to be managed by the tool.
+    *   `models`: A list of models to be managed by the tool for this host.
 *   `debug`: A boolean value (`true` or `false`) that toggles debug mode. When enabled, performance metrics are displayed after each response.
 
 ## Usage
@@ -52,7 +58,7 @@ Before running the application, you need to create a `config.json` file in the `
 1.  **Run the application:**
 
     ```bash
-    go run main.go chat
+    ./bin/gollamacli chat
     ```
 
 2.  **Select a Host:**
@@ -73,22 +79,22 @@ The following commands are available for managing models:
 
 *   **List Models:** List all models on each node.
     ```bash
-    go run main.go list models
+    ./bin/gollamacli list models
     ```
 
 *   **Pull Models:** Pull all models from the `config.json` file to each node.
     ```bash
-    go run main.go pull models
+    ./bin/gollamacli pull models
     ```
 
 *   **Delete Models:** Delete all models not in the `config.json` file from each node.
     ```bash
-    go run main.go delete models
+    ./bin/gollamacli delete models
     ```
 
 *   **Sync Models:** Sync all models from the `config.json` file to each node. This will delete any models not in the `config.json` file and pull any missing models.
     ```bash
-    go run main.go sync models
+    ./bin/gollamacli sync models
     ```
 
 ### Keyboard Shortcuts (Chat):
@@ -110,3 +116,17 @@ When `debug` is set to `true` in `config.json`, the following performance metric
 *   **Total Duration:** The total time from sending the request to receiving the full response.
 
 A `debug.log` file is also created to log detailed information about the application's execution.
+
+## Build Instructions
+
+### Linux
+
+```bash
+GOOS=linux GOARCH=amd64 go build -o bin/gollamacli cmd/main.go
+```
+
+### Windows
+
+```bash
+GOOS=windows GOARCH=amd64 go build -o bin/gollamacli.exe cmd/main.go
+```

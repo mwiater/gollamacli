@@ -20,16 +20,16 @@ const (
 
 // Host represents a single host in the config
 type Host struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
-	Type string `json:"type"`
+	Name   string   `json:"name"`
+	URL    string   `json:"url"`
+	Type   string   `json:"type"`
+	Models []string `json:"models"`
 }
 
 // Config represents the application's configuration
 type Config struct {
-	Hosts  []Host   `json:"hosts"`
-	Models []string `json:"models"`
-	Debug  bool     `json:"debug"`
+	Hosts []Host `json:"hosts"`
+	Debug bool   `json:"debug"`
 }
 
 // LLMHost defines the interface for a host
@@ -39,18 +39,21 @@ type LLMHost interface {
 	ListModels() ([]string, error)
 	GetName() string
 	GetType() string
+	GetModels() []string
 }
 
 // OllamaHost is an implementation of LLMHost for Ollama
 type OllamaHost struct {
-	Name string
-	URL  string
+	Name   string
+	URL    string
+	Models []string
 }
 
 // LMStudioHost is an implementation of LLMHost for LM Studio
 type LMStudioHost struct {
-	Name string
-	URL  string
+	Name   string
+	URL    string
+	Models []string
 }
 
 func (h *OllamaHost) GetName() string {
@@ -61,12 +64,20 @@ func (h *OllamaHost) GetType() string {
 	return "ollama"
 }
 
+func (h *OllamaHost) GetModels() []string {
+	return h.Models
+}
+
 func (h *LMStudioHost) GetName() string {
 	return h.Name
 }
 
 func (h *LMStudioHost) GetType() string {
 	return "lmstudio"
+}
+
+func (h *LMStudioHost) GetModels() []string {
+	return h.Models
 }
 
 // loadConfig reads and parses the configuration file.
@@ -89,9 +100,9 @@ func createHosts(config Config) []LLMHost {
 	for _, hostConfig := range config.Hosts {
 		switch hostConfig.Type {
 		case "ollama":
-			hosts = append(hosts, &OllamaHost{Name: hostConfig.Name, URL: hostConfig.URL})
+			hosts = append(hosts, &OllamaHost{Name: hostConfig.Name, URL: hostConfig.URL, Models: hostConfig.Models})
 		case "lmstudio":
-			hosts = append(hosts, &LMStudioHost{Name: hostConfig.Name, URL: hostConfig.URL})
+			hosts = append(hosts, &LMStudioHost{Name: hostConfig.Name, URL: hostConfig.URL, Models: hostConfig.Models})
 		default:
 			fmt.Printf("Unknown host type: %s\n", hostConfig.Type)
 		}
@@ -118,7 +129,7 @@ func PullModels() {
 				return
 			}
 			fmt.Printf("Starting model pulls for %s...\n", h.GetName())
-			for _, model := range config.Models {
+			for _, model := range h.GetModels() {
 				fmt.Printf("  -> Pulling model: %s on %s\n", model, h.GetName())
 				h.PullModel(model)
 			}
@@ -161,7 +172,7 @@ func DeleteModels() {
 				fmt.Printf("Deleting models is not supported for %s (%s)\n", h.GetName(), h.GetType())
 				return
 			}
-			deleteModelsOnNode(h, config.Models)
+			deleteModelsOnNode(h, h.GetModels())
 		}(host)
 	}
 	wg.Wait()
