@@ -1,0 +1,24 @@
+# .goreleaser.yml
+version: 2
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - main: ./cmd/main.go
+    id: "gollamacli"
+    binary: gollamacli
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+upx:
+  - enabled: true
+    compress: best
+    lzma: true

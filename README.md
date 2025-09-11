@@ -1,6 +1,14 @@
 # gollamacli CLI
 
-gollamacli CLI is a terminal-based application for interacting with large language models through the Ollama API. It provides a user-friendly interface for selecting a host, choosing a model, and engaging in a conversation.
+gollamacli CLI is a powerful, terminal-based application designed for seamless interaction with large language models through the Ollama API. It offers a rich set of features to streamline your workflow, whether you're managing a single local model or a distributed network of language model hosts.
+
+Key Features:
+
+*   **Multiple Host Management:** Connect to and switch between multiple Ollama and LM Studio hosts defined in a simple `config.json` file.
+*   **Interactive Chat:** Engage in conversations with your chosen language model through a user-friendly terminal interface.
+*   **Model Synchronization:** Keep your models consistent across all your hosts with a single command. The `sync` feature will automatically pull missing models and delete any models that are not defined in your configuration file.
+*   **Efficient Model Management:** Easily list, pull, and delete models on your hosts.
+*   **Debug Mode:** Gain insights into performance with detailed metrics for model loading, prompt evaluation, and response generation.
 
 ## Configuration
 
@@ -51,14 +59,26 @@ Before running the application, you need to create a `config.json` file in the `
     *   `models`: A list of models to be managed by the tool for this host.
 *   `debug`: A boolean value (`true` or `false`) that toggles debug mode. When enabled, performance metrics are displayed after each response.
 
+## Build Instructions
+
+To build the project using GoReleaser, run the following command:
+
+```bash
+goreleaser release --snapshot --clean --skip archive
+```
+
+This will create a snapshot release, which is a test release that doesn't create a Git tag or release on GitHub. The `--clean` flag will remove the `dist` directory before building, and the `--skip-archive` flag will prevent the creation of an archive file (e.g., `.tar.gz` or `.zip`).
+
 ## Usage
+
+After building the project with GoReleaser, you will find the executables in the `dist` directory. The path to the executable will vary depending on your operating system and architecture. For example, on Linux with an AMD64 architecture, the executable will be at `dist/gollamacli_linux_amd64/gollamacli`.
 
 ### Chat
 
 1.  **Run the application:**
 
     ```bash
-    ./bin/gollamacli chat
+    ./dist/gollamacli_linux_amd64/gollamacli chat
     ```
 
 2.  **Select a Host:**
@@ -79,22 +99,22 @@ The following commands are available for managing models:
 
 *   **List Models:** List all models on each node.
     ```bash
-    ./bin/gollamacli list models
+    ./dist/gollamacli_linux_amd64/gollamacli list models
     ```
 
 *   **Pull Models:** Pull all models from the `config.json` file to each node.
     ```bash
-    ./bin/gollamacli pull models
+    ./dist/gollamacli_linux_amd64/gollamacli pull models
     ```
 
 *   **Delete Models:** Delete all models not in the `config.json` file from each node.
     ```bash
-    ./bin/gollamacli delete models
+    ./dist/gollamacli_linux_amd64/gollamacli delete models
     ```
 
 *   **Sync Models:** Sync all models from the `config.json` file to each node. This will delete any models not in the `config.json` file and pull any missing models.
     ```bash
-    ./bin/gollamacli sync models
+    ./dist/gollamacli_linux_amd64/gollamacli sync models
     ```
 
 ### Keyboard Shortcuts (Chat):
@@ -116,17 +136,3 @@ When `debug` is set to `true` in `config.json`, the following performance metric
 *   **Total Duration:** The total time from sending the request to receiving the full response.
 
 A `debug.log` file is also created to log detailed information about the application's execution.
-
-## Build Instructions
-
-### Linux
-
-```bash
-GOOS=linux GOARCH=amd64 go build -o bin/gollamacli cmd/main.go
-```
-
-### Windows
-
-```bash
-GOOS=windows GOARCH=amd64 go build -o bin/gollamacli.exe cmd/main.go
-```
