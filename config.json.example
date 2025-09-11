@@ -27,5 +27,16 @@
       ]
     }
   ],
-  "debug": true
+  "debug": true,
+  "multimodel": false,
+  "multimodelConfig": [
+    {
+      "host": "Ollama01",
+      "model": "stablelm-zephyr:3b"
+    },
+    {
+      "host": "LMStudio01",
+      "model": "stablelm-zephyr:3b"
+    }
+  ]
 }
