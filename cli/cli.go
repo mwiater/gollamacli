@@ -37,6 +37,8 @@ type Config struct {
 	Hosts []Host `json:"hosts"`
 	// Debug flag; if true, additional debug information is displayed.
 	Debug bool `json:"debug"`
+	// Multimodel flag; if true, the application will exit before presenting the UI.
+	Multimodel bool `json:"multimodel"`
 }
 
 // loadConfig reads and parses the configuration file from the given path.
@@ -736,6 +738,11 @@ func StartGUI() {
 	cfg, err := loadConfig("config.json")
 	if err != nil {
 		log.Fatalf("Failed to start: %v", err)
+	}
+
+	if cfg.Multimodel {
+		fmt.Println("Multimodel is enabled. Exiting application.")
+		os.Exit(0)
 	}
 
 	m := initialModel(cfg)
