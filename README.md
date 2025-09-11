@@ -71,14 +71,14 @@ This will create a snapshot release, which is a test release that doesn't create
 
 ## Usage
 
-After building the project with GoReleaser, you will find the executables in the `dist` directory. The path to the executable will vary depending on your operating system and architecture. For example, on Linux with an AMD64 architecture, the executable will be at `dist/gollamacli_linux_amd64/gollamacli`.
+After building the project with GoReleaser, you will find the executables in the `dist` directory. The path to the executable will vary depending on your operating system and architecture. For example, on Linux with an AMD64 architecture, the executable will be at `dist/gollamacli_linux_amd64_v1/gollamacli`.
 
 ### Chat
 
 1.  **Run the application:**
 
     ```bash
-    ./dist/gollamacli_linux_amd64/gollamacli chat
+    ./dist/gollamacli_linux_amd64_v1/gollamacli chat
     ```
 
 2.  **Select a Host:**
@@ -99,22 +99,22 @@ The following commands are available for managing models:
 
 *   **List Models:** List all models on each node.
     ```bash
-    ./dist/gollamacli_linux_amd64/gollamacli list models
+    ./dist/gollamacli_linux_amd64_v1/gollamacli list models
     ```
 
 *   **Pull Models:** Pull all models from the `config.json` file to each node.
     ```bash
-    ./dist/gollamacli_linux_amd64/gollamacli pull models
+    ./dist/gollamacli_linux_amd64_v1/gollamacli pull models
     ```
 
 *   **Delete Models:** Delete all models not in the `config.json` file from each node.
     ```bash
-    ./dist/gollamacli_linux_amd64/gollamacli delete models
+    ./dist/gollamacli_linux_amd64_v1/gollamacli delete models
     ```
 
 *   **Sync Models:** Sync all models from the `config.json` file to each node. This will delete any models not in the `config.json` file and pull any missing models.
     ```bash
-    ./dist/gollamacli_linux_amd64/gollamacli sync models
+    ./dist/gollamacli_linux_amd64_v1/gollamacli sync models
     ```
 
 ### Keyboard Shortcuts (Chat):

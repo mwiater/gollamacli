@@ -37,6 +37,7 @@ type LLMHost interface {
 	PullModel(model string)
 	DeleteModel(model string)
 	ListModels() ([]string, error)
+	UnloadModel(model string)
 	GetName() string
 	GetType() string
 	GetModels() []string
@@ -221,6 +222,57 @@ func (h *OllamaHost) DeleteModel(model string) {
 
 func (h *LMStudioHost) DeleteModel(model string) {
 	fmt.Printf("Deleting models is not supported for LM Studio host: %s\n", h.Name)
+}
+
+// UnloadModels unloads all currently loaded models on each host.
+func UnloadModels() {
+	config, err := loadConfig()
+	if err != nil {
+		fmt.Printf("Error reading %s: %v\n", configFile, err)
+		return
+	}
+
+	hosts := createHosts(config)
+	var wg sync.WaitGroup
+	for _, host := range hosts {
+		wg.Add(1)
+		go func(h LLMHost) {
+			defer wg.Done()
+			if h.GetType() != "ollama" {
+				fmt.Printf("Unloading models is not supported for %s (%s)\n", h.GetName(), h.GetType())
+				return
+			}
+			fmt.Printf("Unloading models for %s...\n", h.GetName())
+			runningModels, err := h.(*OllamaHost).getRunningModels()
+			if err != nil {
+				fmt.Printf("Error getting running models from %s: %v\n", h.GetName(), err)
+				return
+			}
+			for model := range runningModels {
+				fmt.Printf("  -> Unloading model: %s on %s\n", model, h.GetName())
+				h.UnloadModel(model)
+			}
+		}(host)
+	}
+	wg.Wait()
+	fmt.Println("All model unload commands have finished.")
+}
+
+// unloadModel unloads a model from a single node.
+func (h *OllamaHost) UnloadModel(model string) {
+	url := fmt.Sprintf("%s/api/chat", h.URL)
+	payload := map[string]any{"model": model, "keep_alive": 0}
+	body, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", url, bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	_, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Printf("Error unloading model %s on %s: %v\n", model, h.Name, err)
+	}
+}
+
+func (h *LMStudioHost) UnloadModel(model string) {
+	fmt.Printf("Unloading models is not supported for LM Studio host: %s\n", h.Name)
 }
 
 // SyncModels runs DeleteModels and then PullModels.
