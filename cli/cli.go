@@ -37,14 +37,6 @@ type Config struct {
 	Hosts []Host `json:"hosts"`
 	// Debug flag; if true, additional debug information is displayed.
 	Debug bool `json:"debug"`
-	// Multimodel flag; if true, allows selecting multiple models for chat.
-	Multimodel       bool               `json:"multimodel"`
-	MultimodelConfig []MultimodelConfig `json:"multimodelConfig"`
-}
-
-type MultimodelConfig struct {
-	Host  string `json:"host"`
-	Model string `json:"model"`
 }
 
 // loadConfig reads and parses the configuration file from the given path.
@@ -69,30 +61,30 @@ func loadConfig(path string) (*Config, error) {
 // including performance metrics and model details.
 type LLMResponseMeta struct {
 	// Name of the language model used.
-	Model              string    `json:"model"`
+	Model string `json:"model"`
 	// Timestamp when the response was created.
-	CreatedAt          time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// Indicates if the response stream is complete.
-	Done               bool      `json:"done"`
+	Done bool `json:"done"`
 	// Total duration of the request in nanoseconds.
-	TotalDuration      int64     `json:"total_duration"`
+	TotalDuration int64 `json:"total_duration"`
 	// Duration spent loading the model in nanoseconds.
-	LoadDuration       int64     `json:"load_duration"`
+	LoadDuration int64 `json:"load_duration"`
 	// Number of tokens in the prompt evaluated.
-	PromptEvalCount    int       `json:"prompt_eval_count"`
+	PromptEvalCount int `json:"prompt_eval_count"`
 	// Duration spent evaluating the prompt in nanoseconds.
-	PromptEvalDuration int64     `json:"prompt_eval_duration"`
+	PromptEvalDuration int64 `json:"prompt_eval_duration"`
 	// Number of tokens in the response evaluated.
-	EvalCount          int       `json:"eval_count"`
+	EvalCount int `json:"eval_count"`
 	// Duration spent evaluating the response in nanoseconds.
-	EvalDuration       int64     `json:"eval_duration"`
+	EvalDuration int64 `json:"eval_duration"`
 }
 
 // chatMessage represents a single message in a chat conversation,
 // including the role of the sender (e.g., "user", "assistant") and the content of the message.
 type chatMessage struct {
 	// Role of the message sender (e.g., "user", "assistant").
-	Role    string `json:"role"`
+	Role string `json:"role"`
 	// Content of the message.
 	Content string `json:"content"`
 }
@@ -104,24 +96,24 @@ type streamChunk struct {
 	Model   string `json:"model"`
 	Message struct {
 		// Role of the message sender within this chunk.
-		Role    string `json:"role"`
+		Role string `json:"role"`
 		// Partial content of the message.
 		Content string `json:"content"`
 	} `json:"message"`
 	// Indicates if this is the final chunk of the stream.
-	Done               bool  `json:"done"`
+	Done bool `json:"done"`
 	// Total duration up to this chunk in nanoseconds.
-	TotalDuration      int64 `json:"total_duration"`
+	TotalDuration int64 `json:"total_duration"`
 	// Duration spent loading the model up to this chunk in nanoseconds.
-	LoadDuration       int64 `json:"load_duration"`
+	LoadDuration int64 `json:"load_duration"`
 	// Number of tokens in the prompt evaluated up to this chunk.
-	PromptEvalCount    int   `json:"prompt_eval_count"`
+	PromptEvalCount int `json:"prompt_eval_count"`
 	// Duration spent evaluating the prompt up to this chunk in nanoseconds.
 	PromptEvalDuration int64 `json:"prompt_eval_duration"`
 	// Number of tokens in the response evaluated up to this chunk.
-	EvalCount          int   `json:"eval_count"`
+	EvalCount int `json:"eval_count"`
 	// Duration spent evaluating the response up to this chunk in nanoseconds.
-	EvalDuration       int64 `json:"eval_duration"`
+	EvalDuration int64 `json:"eval_duration"`
 }
 
 // ollamaTagsResponse represents the structure of the response from the Ollama /api/tags endpoint,
@@ -156,58 +148,51 @@ const (
 	viewLoadingChat
 	// viewChat is the state where the user is interacting with the chat.
 	viewChat
-	viewMultiModelChat
 )
 
 // model is the main application model for the Bubble Tea UI.
 // It holds all the necessary state for the chat application.
 type model struct {
 	// Application configuration.
-	config    *Config
+	config *Config
 	// HTTP client for API requests.
-	client    *http.Client
+	client *http.Client
 	// Current view state of the application.
-	state     viewState
+	state viewState
 	// Indicates if an asynchronous operation is in progress.
 	isLoading bool
 	// Stores any error encountered during operations.
-	err       error
+	err error
 
 	// Bubble Tea list model for host selection.
-	hostList      list.Model
+	hostList list.Model
 	// Bubble Tea list model for model selection.
-	modelList     list.Model
+	modelList list.Model
 	// Bubble Tea textarea model for user input.
-	textArea      textarea.Model
+	textArea textarea.Model
 	// Bubble Tea viewport model for displaying chat history.
-	viewport      viewport.Model
+	viewport viewport.Model
 	// Bubble Tea spinner model for indicating loading.
-	spinner       spinner.Model
+	spinner spinner.Model
 	// Stores the history of chat messages.
-	chatHistory   []chatMessage
+	chatHistory []chatMessage
 	// Buffer to accumulate streaming responses.
-	responseBuf   strings.Builder
+	responseBuf strings.Builder
 	// Metadata of the last language model response.
-	responseMeta  LLMResponseMeta
+	responseMeta LLMResponseMeta
 	// The currently selected host.
-	selectedHost  Host
+	selectedHost Host
 	// The currently selected model.
 	selectedModel string
 	// List of models currently loaded on the selected host.
-	loadedModels  []string
+	loadedModels []string
 
 	// Current width and height of the terminal.
-	width, height    int
+	width, height int
 	// Reference to the Bubble Tea program.
-	program          *tea.Program
+	program *tea.Program
 	// Timestamp when the last request started.
 	requestStartTime time.Time
-
-	// Multimodel chat fields
-	multiChatViewports []viewport.Model
-	multiChatBuffers   []strings.Builder
-	multiChatMetas     []LLMResponseMeta
-	multiChatDone      []bool
 }
 
 // initialModel initializes a new model with default values and sets up
@@ -226,50 +211,39 @@ func initialModel(cfg *Config) *model {
 	ta.SetHeight(1)
 	ta.KeyMap.InsertNewline.SetEnabled(false)
 
-	m := &model{
+	hostItems := make([]list.Item, len(cfg.Hosts))
+	for i, h := range cfg.Hosts {
+		hostItems[i] = item{title: h.Name, desc: h.URL}
+	}
+	hostDelegate := list.NewDefaultDelegate()
+	hostList := list.New(hostItems, hostDelegate, 0, 0)
+	hostList.Title = "Select a Host"
+
+	vp := viewport.New(100, 5)
+
+	return &model{
 		config: cfg,
 		client: &http.Client{
 			Transport: &http.Transport{
 				ForceAttemptHTTP2: false,
 			},
 		},
+		state:     viewHostSelector,
 		spinner:   s,
 		textArea:  ta,
+		hostList:  hostList,
+		modelList: list.New(nil, list.NewDefaultDelegate(), 0, 0),
+		viewport:  vp,
 	}
-
-	if cfg.Multimodel {
-		m.state = viewMultiModelChat
-		numModels := len(cfg.MultimodelConfig)
-		m.multiChatViewports = make([]viewport.Model, numModels)
-		m.multiChatBuffers = make([]strings.Builder, numModels)
-		m.multiChatMetas = make([]LLMResponseMeta, numModels)
-		m.multiChatDone = make([]bool, numModels)
-		for i := 0; i < numModels; i++ {
-			m.multiChatViewports[i] = viewport.New(100, 5)
-		}
-	} else {
-		hostItems := make([]list.Item, len(cfg.Hosts))
-		for i, h := range cfg.Hosts {
-			hostItems[i] = item{title: h.Name, desc: h.URL}
-		}
-		hostDelegate := list.NewDefaultDelegate()
-		m.hostList = list.New(hostItems, hostDelegate, 0, 0)
-		m.hostList.Title = "Select a Host"
-		m.modelList = list.New(nil, list.NewDefaultDelegate(), 0, 0)
-		m.viewport = viewport.New(100, 5)
-		m.state = viewHostSelector
-	}
-
-	return m
 }
 
 // item represents a selectable item in a Bubble Tea list,
 // used for both hosts and models.
 type item struct {
 	// The main title of the item.
-	title  string
+	title string
 	// A short description of the item.
-	desc   string
+	desc string
 	// Indicates if the model is currently loaded (only applicable for model items).
 	loaded bool
 }
@@ -304,16 +278,11 @@ type chatReadyMsg struct{}
 // chatReadyErr is sent when an error occurs while preparing the chat interface.
 type chatReadyErr error
 
-type streamChunkMsg struct {
-	ID      int
-	Content string
-}
+// streamChunkMsg is sent when a new chunk of a streaming response is received.
+type streamChunkMsg string
 
 // streamEndMsg is sent when a streaming response has completed.
-type streamEndMsg struct {
-	ID   int
-	meta LLMResponseMeta
-}
+type streamEndMsg struct{ meta LLMResponseMeta }
 
 // streamErr is sent when an error occurs during a streaming response.
 type streamErr error
@@ -392,8 +361,6 @@ func getLoadedModels(host Host, client *http.Client) ([]string, error) {
 	return loadedModels, nil
 }
 
-
-
 // loadModelCmd is a Bubble Tea command that attempts to load a specified model
 // on the given host by sending a minimal generate request to /api/generate.
 // This is typically used to ensure a model is ready for chat.
@@ -463,7 +430,7 @@ func streamChatCmd(p *tea.Program, host Host, modelName string, history []chatMe
 					}
 					break
 				}
-				p.Send(streamChunkMsg{Content: chunk.Message.Content})
+				p.Send(streamChunkMsg(chunk.Message.Content))
 				if chunk.Done {
 					finalChunk = chunk
 					break
@@ -482,78 +449,6 @@ func streamChatCmd(p *tea.Program, host Host, modelName string, history []chatMe
 			}})
 		}()
 
-		return nil
-	}
-}
-
-func streamMultiModelChatCmd(p *tea.Program, cfg *Config, history []chatMessage, client *http.Client) tea.Cmd {
-	return func() tea.Msg {
-		for i, multiModelCfg := range cfg.MultimodelConfig {
-			go func(id int, hostName, modelName string) {
-				var host Host
-				for _, h := range cfg.Hosts {
-					if h.Name == hostName {
-						host = h
-						break
-					}
-				}
-				if host.Name == "" {
-					p.Send(streamErr(fmt.Errorf("host not found: %s", hostName)))
-					return
-				}
-
-				payload := map[string]any{
-					"model":    modelName,
-					"messages": history,
-					"stream":   true,
-				}
-				body, _ := json.Marshal(payload)
-				req, err := http.NewRequestWithContext(context.Background(), "POST", host.URL+"/api/chat", bytes.NewReader(body))
-				if err != nil {
-					p.Send(streamErr(err))
-					return
-				}
-				req.Header.Set("Content-Type", "application/json")
-
-				resp, err := client.Do(req)
-				if err != nil {
-					p.Send(streamErr(err))
-					return
-				}
-				defer resp.Body.Close()
-
-				decoder := json.NewDecoder(resp.Body)
-				var finalChunk streamChunk
-				for {
-					var chunk streamChunk
-					if err := decoder.Decode(&chunk); err != nil {
-						if err != io.EOF {
-							p.Send(streamErr(err))
-						}
-						break
-					}
-					p.Send(streamChunkMsg{ID: id, Content: chunk.Message.Content})
-					if chunk.Done {
-						finalChunk = chunk
-						break
-					}
-				}
-				p.Send(streamEndMsg{
-					ID: id,
-					meta: LLMResponseMeta{
-						Model:              finalChunk.Model,
-						CreatedAt:          time.Now(),
-						Done:               finalChunk.Done,
-						TotalDuration:      finalChunk.TotalDuration,
-						LoadDuration:       finalChunk.LoadDuration,
-						PromptEvalCount:    finalChunk.PromptEvalCount,
-						PromptEvalDuration: finalChunk.PromptEvalDuration,
-						EvalCount:          finalChunk.EvalCount,
-						EvalDuration:       finalChunk.EvalDuration,
-					},
-				})
-			}(i, multiModelCfg.Host, multiModelCfg.Model)
-		}
 		return nil
 	}
 }
@@ -579,26 +474,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	if m.config.Multimodel && (m.state == viewHostSelector || m.state == viewModelSelector) {
-		// In multimodel mode, bypass host and model selection
-		switch msg := msg.(type) {
-		case tea.KeyMsg:
-			switch msg.String() {
-			case "ctrl+c", "q":
-				return m, tea.Quit
-			}
-		case tea.WindowSizeMsg:
-			m.width, m.height = msg.Width, msg.Height
-			numModels := len(m.config.MultimodelConfig)
-			viewportWidth := (m.width - numModels + 1) / numModels
-			for i := 0; i < numModels; i++ {
-				m.multiChatViewports[i].Width = viewportWidth
-				m.multiChatViewports[i].Height = m.height - 9 // Adjust for header and input
-			}
-		}
-		return m, nil
-	}
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -620,15 +495,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		footerHeight := 5
 		m.viewport.Width = msg.Width
 		m.viewport.Height = msg.Height - headerHeight - footerHeight
-		if m.config.Multimodel {
-			// Update viewports in multimodel view
-			numModels := len(m.config.MultimodelConfig)
-			viewportWidth := (m.width - numModels + 1) / numModels
-			for i := 0; i < numModels; i++ {
-				m.multiChatViewports[i].Width = viewportWidth
-				m.multiChatViewports[i].Height = m.height - headerHeight - footerHeight
-			}
-		}
 
 	case chatReadyMsg:
 		m.isLoading = false
@@ -659,44 +525,22 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case streamChunkMsg:
-		if m.config.Multimodel {
-			m.multiChatBuffers[msg.ID].WriteString(msg.Content)
-			m.multiChatViewports[msg.ID].GotoBottom()
-		} else {
-			m.responseBuf.WriteString(msg.Content)
-			m.viewport.GotoBottom()
-		}
+		m.responseBuf.WriteString(string(msg))
+		m.viewport.GotoBottom()
 		return m, nil
 
 	case streamEndMsg:
-		if m.config.Multimodel {
-			m.multiChatMetas[msg.ID] = msg.meta
-			m.multiChatDone[msg.ID] = true
-			// Check if all streams are done
-			allDone := true
-			for _, done := range m.multiChatDone {
-				if !done {
-					allDone = false
-					break
-				}
-			}
-			if allDone {
-				m.isLoading = false
-				m.textArea.Focus()
-			}
-		} else {
-			m.responseMeta = msg.meta
-			if m.responseBuf.Len() > 0 {
-				m.chatHistory = append(m.chatHistory, chatMessage{
-					Role:    "assistant",
-					Content: m.responseBuf.String(),
-				})
-				m.responseBuf.Reset()
-			}
-			m.isLoading = false
-			m.textArea.Focus()
-			m.viewport.GotoBottom()
+		m.responseMeta = msg.meta
+		if m.responseBuf.Len() > 0 {
+			m.chatHistory = append(m.chatHistory, chatMessage{
+				Role:    "assistant",
+				Content: m.responseBuf.String(),
+			})
+			m.responseBuf.Reset()
 		}
+		m.isLoading = false
+		m.textArea.Focus()
+		m.viewport.GotoBottom()
 		return m, nil
 
 	case streamErr:
@@ -757,26 +601,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, m.spinner.Tick, streamChatCmd(m.program, m.selectedHost, m.selectedModel, m.chatHistory, m.client))
 			}
 		}
-	case viewMultiModelChat:
-		m.textArea, cmd = m.textArea.Update(msg)
-		cmds = append(cmds, cmd)
-
-		if msg, ok := msg.(tea.KeyMsg); ok && msg.String() == "enter" {
-			userInput := strings.TrimSpace(m.textArea.Value())
-			if userInput != "" {
-				m.chatHistory = append(m.chatHistory, chatMessage{Role: "user", Content: userInput})
-				m.textArea.Reset()
-				m.isLoading = true
-				m.err = nil
-				// Reset multi-chat state
-				numModels := len(m.config.MultimodelConfig)
-				m.multiChatBuffers = make([]strings.Builder, numModels)
-				m.multiChatMetas = make([]LLMResponseMeta, numModels)
-				m.multiChatDone = make([]bool, numModels)
-
-				cmds = append(cmds, m.spinner.Tick, streamMultiModelChatCmd(m.program, m.config, m.chatHistory, m.client))
-			}
-		}
 	}
 
 	if m.isLoading {
@@ -818,75 +642,10 @@ func (m *model) View() string {
 
 	case viewChat:
 		return m.chatView()
-	case viewMultiModelChat:
-		return m.multiModelChatView()
 
 	default:
 		return "Unknown state"
 	}
-}
-
-func (m *model) multiModelChatView() string {
-	var builder strings.Builder
-
-	help := lipgloss.NewStyle().Faint(true).Render(" (q to quit)")
-	builder.WriteString(help + "\n\n")
-
-	var viewports []string
-	for i, vp := range m.multiChatViewports {
-		headerStyle := lipgloss.NewStyle().Background(lipgloss.Color("62")).Foreground(lipgloss.Color("230")).Padding(0, 1)
-		hostInfo := fmt.Sprintf("Host: %s", m.config.MultimodelConfig[i].Host)
-		modelInfo := fmt.Sprintf("Model: %s", m.config.MultimodelConfig[i].Model)
-		status := lipgloss.JoinHorizontal(lipgloss.Top,
-			headerStyle.Render(hostInfo),
-			headerStyle.MarginLeft(1).Render(modelInfo),
-		)
-
-		var historyBuilder strings.Builder
-		userStyle := lipgloss.NewStyle().Bold(true)
-		assistantStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("5"))
-
-		for _, msg := range m.chatHistory {
-			var role, content string
-			if msg.Role == "user" {
-				role = userStyle.Render("You: ")
-				content = msg.Content
-				wrappedContent := lipgloss.NewStyle().Width(vp.Width - lipgloss.Width(role) - 2).Render(content)
-				historyBuilder.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, role, wrappedContent) + "\n")
-			}
-		}
-
-		if m.multiChatBuffers[i].Len() > 0 {
-			role := assistantStyle.Render("Assistant: ")
-			wrappedContent := lipgloss.NewStyle().Width(vp.Width - lipgloss.Width(role) - 2).Render(m.multiChatBuffers[i].String())
-			historyBuilder.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, role, wrappedContent))
-		}
-
-		vp.SetContent(historyBuilder.String())
-		viewports = append(viewports, lipgloss.JoinVertical(lipgloss.Left, status, vp.View()))
-	}
-
-	builder.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, viewports...))
-
-	if m.isLoading {
-		timer := fmt.Sprintf("%.1f", time.Since(m.requestStartTime).Seconds())
-		loadingText := fmt.Sprintf(" Assistant is thinking... %ss", timer)
-		builder.WriteString("\n" + m.spinner.View() + loadingText)
-	} else {
-		builder.WriteString("\n" + m.textArea.View())
-	}
-
-	if m.config.Debug {
-		var metas []string
-		for i, meta := range m.multiChatMetas {
-			if m.multiChatDone[i] {
-				metas = append(metas, formatMeta(meta))
-			}
-		}
-		builder.WriteString("\n" + strings.Join(metas, "\n"))
-	}
-
-	return builder.String()
 }
 
 // chatView renders the chat interface, including the header, chat history,
