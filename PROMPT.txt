@@ -1,21 +1,10 @@
-These should be the nodes and models in the config.json file (do not modify these values unless I tell you to!s):
+Fixes:
 
-Nodes:
-o-udoo01.0nezer0.com
-o-udoo02.0nezer0.com
-o-udoo03.0nezer0.com
-o-udoo04.0nezer0.com
+* Align multimodel column headers to related chat columns. Currently, the chat columns are correct, but the headers are stacked verically on the left, rather than aligned with the chat columns.
+* Chat responses: I am getting multiple Assistant lines for each chat response. E.g.:
 
-
-Models:
-stablelm-zephyr:3b
-granite3.3:2b
-gemma3n:e2b
-deepseek-r1:1.5b
-llama3.2:1b
-granite3.1-moe:1b
-dolphin-phi:2.7b
-qwen3:1.7b
-
-debug: true
-
+Assistant: Hello
+Assistant: !
+Assistant:  How
+Assistant:  Can
+...

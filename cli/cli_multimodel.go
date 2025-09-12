@@ -40,12 +40,13 @@ type hostModelAssignment struct {
 
 // multimodelColumnResponse holds the streaming response data for a single column
 type multimodelColumnResponse struct {
-	hostIndex   int
-	content     strings.Builder
-	isStreaming bool
-	error       error
-	meta        LLMResponseMeta
-	chatHistory []chatMessage // Add chat history for this column
+	hostIndex        int
+	content          strings.Builder
+	isStreaming      bool
+	error            error
+	meta             LLMResponseMeta
+	chatHistory      []chatMessage // Add chat history for this column
+	requestStartTime time.Time
 }
 
 // multimodelModel is the main application model for multimodel mode
@@ -322,7 +323,14 @@ func (m *multimodelModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case multimodelStreamChunkMsg:
 		if msg.hostIndex < len(m.columnResponses) {
-			m.columnResponses[msg.hostIndex].chatHistory = append(m.columnResponses[msg.hostIndex].chatHistory, msg.message)
+			// Check if there's an existing assistant message to append to
+			history := &m.columnResponses[msg.hostIndex].chatHistory
+			if len(*history) > 0 && (*history)[len(*history)-1].Role == "assistant" {
+				(*history)[len(*history)-1].Content += msg.message.Content
+			} else {
+				// Start a new assistant message
+				*history = append(*history, msg.message)
+			}
 			m.columnResponses[msg.hostIndex].isStreaming = true
 		}
 		return m, nil
@@ -488,6 +496,7 @@ func (m *multimodelModel) updateChat(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i := range m.columnResponses {
 				if m.assignments[i].isAssigned {
 					m.columnResponses[i].chatHistory = append(m.columnResponses[i].chatHistory, userMsg)
+					m.columnResponses[i].requestStartTime = time.Now()
 				}
 				m.columnResponses[i].content.Reset() // Clear content buffer for new streaming response
 				m.columnResponses[i].error = nil
@@ -495,7 +504,7 @@ func (m *multimodelModel) updateChat(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.requestStartTime = time.Now()
-			m.textArea.Reset()
+			m.textArea.Blur()
 			m.isLoading = true
 			cmds = append(cmds, m.spinner.Tick, multimodelStreamChatCmd(m.program, m)) // Pass the entire model
 		}
@@ -604,7 +613,7 @@ func (m *multimodelModel) multimodelChatView() string {
 	colWidth := (m.width - 8) / 4 // Account for borders and spacing
 
 	// Column headers
-	var headerRow strings.Builder
+	var headerCells []string
 	for i := 0; i < 4; i++ {
 		var colHeader string
 		if i < len(m.assignments) && m.assignments[i].isAssigned {
@@ -621,16 +630,14 @@ func (m *multimodelModel) multimodelChatView() string {
 			Align(lipgloss.Center).
 			Bold(true)
 
-		headerRow.WriteString(colHeaderStyle.Render(colHeader))
-		if i < 3 {
-			headerRow.WriteString(" ")
-		}
+		headerCells = append(headerCells, colHeaderStyle.Render(colHeader))
 	}
-	builder.WriteString(headerRow.String() + "\n")
+	headerRow := lipgloss.JoinHorizontal(lipgloss.Top, headerCells...)
+	builder.WriteString(headerRow + "\n")
 
 	// Response columns
 	// Calculate dynamic height for chat history
-	chatHeight := m.height - lipgloss.Height(headerRow.String()) - lipgloss.Height(m.textArea.View()) - 5 // Adjust 5 for padding/margins
+	chatHeight := m.height - lipgloss.Height(headerRow) - lipgloss.Height(m.textArea.View()) - 5 // Adjust 5 for padding/margins
 
 	var chatRows []string
 	for i := 0; i < 4; i++ {
@@ -670,10 +677,16 @@ func (m *multimodelModel) multimodelChatView() string {
 	builder.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, chatRows...) + "\n")
 
 	// Input area or loading indicator
+	var loadingIndicators []string
+	for i := range m.columnResponses {
+		if m.columnResponses[i].isStreaming {
+			timer := fmt.Sprintf("%.1f", time.Since(m.columnResponses[i].requestStartTime).Seconds())
+			loadingIndicators = append(loadingIndicators, fmt.Sprintf("%s Querying %s... %ss", m.spinner.View(), m.assignments[i].selectedModel, timer))
+		}
+	}
+
 	if m.isLoading {
-		timer := fmt.Sprintf("%.1f", time.Since(m.requestStartTime).Seconds())
-		loadingText := fmt.Sprintf(" Querying all models... %ss", timer)
-		builder.WriteString("\n" + m.spinner.View() + loadingText)
+		builder.WriteString("\n" + strings.Join(loadingIndicators, "\n"))
 	} else {
 		builder.WriteString("\n" + m.textArea.View())
 	}
