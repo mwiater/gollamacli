@@ -497,16 +497,18 @@ func (m *multimodelModel) updateChat(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.assignments[i].isAssigned {
 					m.columnResponses[i].chatHistory = append(m.columnResponses[i].chatHistory, userMsg)
 					m.columnResponses[i].requestStartTime = time.Now()
+					m.columnResponses[i].isStreaming = true
+				} else {
+					m.columnResponses[i].isStreaming = false
 				}
 				m.columnResponses[i].content.Reset() // Clear content buffer for new streaming response
 				m.columnResponses[i].error = nil
-				m.columnResponses[i].isStreaming = false
 			}
 
 			m.requestStartTime = time.Now()
 			m.textArea.Blur()
 			m.isLoading = true
-			cmds = append(cmds, m.spinner.Tick, multimodelStreamChatCmd(m.program, m)) // Pass the entire model
+			cmds = append(cmds, m.spinner.Tick, multimodelStreamChatCmd(m.program, m), tickCmd()) // Pass the entire model
 		}
 	}
 

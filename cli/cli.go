@@ -19,6 +19,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mwiater/gollamacli/models"
 )
 
 // Host represents a language model host with a name and URL.
@@ -741,6 +742,7 @@ func StartGUI() {
 	}
 
 	if cfg.Multimodel {
+		models.UnloadModels()
 		if err := StartMultimodelGUI(cfg); err != nil {
 			log.Fatalf("Error running multimodel program: %v", err)
 		}
