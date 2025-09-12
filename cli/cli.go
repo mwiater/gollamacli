@@ -741,8 +741,10 @@ func StartGUI() {
 	}
 
 	if cfg.Multimodel {
-		fmt.Println("Multimodel is enabled. Exiting application.")
-		os.Exit(0)
+		if err := StartMultimodelGUI(cfg); err != nil {
+			log.Fatalf("Error running multimodel program: %v", err)
+		}
+		return
 	}
 
 	m := initialModel(cfg)
