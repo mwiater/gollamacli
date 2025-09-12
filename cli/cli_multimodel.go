@@ -45,6 +45,7 @@ type multimodelColumnResponse struct {
 	isStreaming bool
 	error       error
 	meta        LLMResponseMeta
+	chatHistory []chatMessage // Add chat history for this column
 }
 
 // multimodelModel is the main application model for multimodel mode
@@ -123,7 +124,7 @@ type multimodelChatReadyErr error
 // multimodelStreamChunkMsg is sent for streaming response chunks
 type multimodelStreamChunkMsg struct {
 	hostIndex int
-	content   string
+	message   chatMessage // Change content to message
 }
 
 // multimodelStreamEndMsg is sent when a stream completes
@@ -199,16 +200,16 @@ func loadMultimodelChatCmd(assignments []hostModelAssignment) tea.Cmd {
 }
 
 // multimodelStreamChatCmd initiates streaming chat for all assigned host/model pairs
-func multimodelStreamChatCmd(p *tea.Program, assignments []hostModelAssignment, history []chatMessage, client *http.Client) tea.Cmd {
+func multimodelStreamChatCmd(p *tea.Program, m *multimodelModel) tea.Cmd { // Pass the entire model
 	return func() tea.Msg {
 		// Start streaming for each assigned host/model pair
-		for i, assignment := range assignments {
+		for i, assignment := range m.assignments { // Use m.assignments
 			if assignment.isAssigned {
-				go func(hostIndex int, host Host, model string) {
-					if err := streamToColumn(p, hostIndex, host, model, history, client); err != nil {
+				go func(hostIndex int, host Host, model string, history []chatMessage) { // Pass history to goroutine
+					if err := streamToColumn(p, hostIndex, host, model, history, m.client); err != nil { // Use m.client
 						p.Send(multimodelStreamErr{hostIndex: hostIndex, err: err})
 					}
-				}(i, assignment.host, assignment.selectedModel)
+				}(i, assignment.host, assignment.selectedModel, m.columnResponses[i].chatHistory) // Pass individual column history
 			}
 		}
 		return nil
@@ -247,7 +248,10 @@ func streamToColumn(p *tea.Program, hostIndex int, host Host, modelName string, 
 		}
 		p.Send(multimodelStreamChunkMsg{
 			hostIndex: hostIndex,
-			content:   chunk.Message.Content,
+			message: chatMessage{
+				Role:    chunk.Message.Role,
+				Content: chunk.Message.Content,
+			},
 		})
 		if chunk.Done {
 			finalChunk = chunk
@@ -318,7 +322,7 @@ func (m *multimodelModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case multimodelStreamChunkMsg:
 		if msg.hostIndex < len(m.columnResponses) {
-			m.columnResponses[msg.hostIndex].content.WriteString(msg.content)
+			m.columnResponses[msg.hostIndex].chatHistory = append(m.columnResponses[msg.hostIndex].chatHistory, msg.message)
 			m.columnResponses[msg.hostIndex].isStreaming = true
 		}
 		return m, nil
@@ -479,18 +483,21 @@ func (m *multimodelModel) updateChat(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok && keyMsg.String() == "enter" {
 		userInput := strings.TrimSpace(m.textArea.Value())
 		if userInput != "" {
-			// Clear previous responses
+			// Add user message to all assigned column histories
+			userMsg := chatMessage{Role: "user", Content: userInput}
 			for i := range m.columnResponses {
-				m.columnResponses[i].content.Reset()
+				if m.assignments[i].isAssigned {
+					m.columnResponses[i].chatHistory = append(m.columnResponses[i].chatHistory, userMsg)
+				}
+				m.columnResponses[i].content.Reset() // Clear content buffer for new streaming response
 				m.columnResponses[i].error = nil
 				m.columnResponses[i].isStreaming = false
 			}
 
 			m.requestStartTime = time.Now()
-			m.chatHistory = append(m.chatHistory, chatMessage{Role: "user", Content: userInput})
 			m.textArea.Reset()
 			m.isLoading = true
-			cmds = append(cmds, m.spinner.Tick, multimodelStreamChatCmd(m.program, m.assignments, m.chatHistory, m.client))
+			cmds = append(cmds, m.spinner.Tick, multimodelStreamChatCmd(m.program, m)) // Pass the entire model
 		}
 	}
 
@@ -622,32 +629,45 @@ func (m *multimodelModel) multimodelChatView() string {
 	builder.WriteString(headerRow.String() + "\n")
 
 	// Response columns
-	maxLines := 10 // Adjust based on available height
-	var responseRow strings.Builder
+	// Calculate dynamic height for chat history
+	chatHeight := m.height - lipgloss.Height(headerRow.String()) - lipgloss.Height(m.textArea.View()) - 5 // Adjust 5 for padding/margins
+
+	var chatRows []string
 	for i := 0; i < 4; i++ {
-		var colContent string
+		var colChatHistory strings.Builder
 		if i < len(m.assignments) && m.assignments[i].isAssigned {
 			if m.columnResponses[i].error != nil {
 				errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
-				colContent = errorStyle.Render(fmt.Sprintf("Error: %v", m.columnResponses[i].error))
+				colChatHistory.WriteString(errorStyle.Render(fmt.Sprintf("Error: %v", m.columnResponses[i].error)))
 			} else {
-				colContent = m.columnResponses[i].content.String()
+				userStyle := lipgloss.NewStyle().Bold(true)
+				assistantStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("5"))
+
+				for _, msg := range m.columnResponses[i].chatHistory {
+					var role, content string
+					if msg.Role == "assistant" {
+						role = assistantStyle.Render("Assistant: ")
+						content = msg.Content
+					} else {
+						role = userStyle.Render("You: ")
+						content = msg.Content
+					}
+					wrappedContent := lipgloss.NewStyle().Width(colWidth - lipgloss.Width(role) - 2).Render(content)
+					colChatHistory.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, role, wrappedContent) + "\n")
+				}
 			}
 		}
 
 		colStyle := lipgloss.NewStyle().
 			Width(colWidth).
-			Height(maxLines).
+			Height(chatHeight).
 			Border(lipgloss.NormalBorder()).
 			BorderForeground(lipgloss.Color("238")).
 			Padding(0, 1)
 
-		responseRow.WriteString(colStyle.Render(colContent))
-		if i < 3 {
-			responseRow.WriteString(" ")
-		}
+		chatRows = append(chatRows, colStyle.Render(colChatHistory.String()))
 	}
-	builder.WriteString(responseRow.String() + "\n")
+	builder.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, chatRows...) + "\n")
 
 	// Input area or loading indicator
 	if m.isLoading {
