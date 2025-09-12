@@ -1,0 +1,13 @@
+# MULTIMODEL_TEST_PROMPTS
+
+Prompt 1 (Reasoning):
+
+If a meeting is scheduled for two hours after 3:15 PM, but is delayed by 45 minutes, what time will the meeting start, expressed in HH:MM PM format in a single sentence?
+
+Prompt 2 (Creativity):
+
+Write a single-sentence horror story of exactly ten words about a mirror.
+
+Prompt 3 (Math):
+
+In one sentence, provide the result of multiplying the number of sides on a hexagon by the number of planets in our solar system.

@@ -351,6 +351,7 @@ func (m *multimodelModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if allDone {
 			m.isLoading = false
 			m.textArea.Focus()
+			m.textArea.Reset()
 
 			// Add responses to chat history
 			for i, assignment := range m.assignments {
