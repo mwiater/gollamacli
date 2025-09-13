@@ -1,3 +1,4 @@
+// cmd/gollamacli/chat.go
 package gollamacli
 
 import (
@@ -15,7 +16,6 @@ var chatCmd = &cobra.Command{
 	},
 }
 
-// init adds the chat command to the root command.
 func init() {
 	rootCmd.AddCommand(chatCmd)
 }

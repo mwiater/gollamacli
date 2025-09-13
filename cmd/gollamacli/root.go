@@ -1,3 +1,4 @@
+// cmd/gollamacli/root.go
 package gollamacli
 
 import (
@@ -7,18 +8,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd is the base command for the gollamacli application.
-// It provides the core command line interface for building and running instrumented versions of Go applications.
-// The command holds the primary configuration, usage details, and a detailed description of the application's purpose.
+// rootCmd is the base Cobra command for the gollamacli application.
+// All subcommands are attached to this root to form the complete CLI.
 var rootCmd = &cobra.Command{
 	Use:   "gollamacli",
 	Short: "gollamacli",
 	Long:  `gollamacli`,
 }
 
-// Execute executes the root command along with any registered subcommands.
-// If the command execution results in an error, the error is printed and the program exits
-// with a non-zero status code.
+// Execute runs the root Cobra command and all registered subcommands.
+// It prints any returned error and exits the process with a non-zero
+// status code on failure.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -26,9 +26,5 @@ func Execute() {
 	}
 }
 
-// init initializes the root command's configuration.
-// This function is reserved for setting up additional top-level flags or configurations.
-// Since subcommands are self-registered in their respective files, no further initialization
-// is required here.
 func init() {
 }

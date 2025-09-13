@@ -1,3 +1,4 @@
+// cli/cli.go
 package cli
 
 import (
@@ -22,23 +23,26 @@ import (
 	"github.com/mwiater/gollamacli/models"
 )
 
-// Host represents a language model host with a name and URL.
+// Host describes a language model host and its configured models.
+// It is used by the TUI to display selectable hosts and by the
+// network layer to build API requests.
 type Host struct {
-	// Name of the host, e.g., "Local Ollama"
+	// Name is a user-friendly label for the host, for example "Local Ollama".
 	Name string `json:"name"`
-	// URL of the host, e.g., "http://localhost:11434"
-	URL    string   `json:"url"`
+	// URL is the HTTP endpoint of the host, such as "http://localhost:11434".
+	URL string `json:"url"`
+	// Models lists the model identifiers that are available or desired on the host.
 	Models []string `json:"models"`
 }
 
-// Config holds the application's configuration, including a list of language model hosts
-// and a debug flag.
+// Config contains application settings that drive the CLI/TUI behavior.
+// It includes the set of available hosts, debug mode, and multimodel mode.
 type Config struct {
-	// List of available language model hosts.
+	// Hosts is the list of language model backends the application can target.
 	Hosts []Host `json:"hosts"`
-	// Debug flag; if true, additional debug information is displayed.
+	// Debug enables display of timing metrics and logs additional details.
 	Debug bool `json:"debug"`
-	// Multimodel flag; if true, the application will exit before presenting the UI.
+	// Multimodel toggles the four-column chat interface for multiple models.
 	Multimodel bool `json:"multimodel"`
 }
 
@@ -60,26 +64,27 @@ func loadConfig(path string) (*Config, error) {
 	return &cfg, nil
 }
 
-// LLMResponseMeta contains metadata about a language model's response,
-// including performance metrics and model details.
+// LLMResponseMeta holds timing and tokenization metrics for a model response.
+// The metadata typically arrives on the final chunk of a streaming response
+// and is rendered when debug mode is enabled.
 type LLMResponseMeta struct {
-	// Name of the language model used.
+	// Model is the name of the model that produced the response.
 	Model string `json:"model"`
-	// Timestamp when the response was created.
+	// CreatedAt is the time when the response metadata was assembled.
 	CreatedAt time.Time `json:"created_at"`
-	// Indicates if the response stream is complete.
+	// Done indicates whether the stream has finished.
 	Done bool `json:"done"`
-	// Total duration of the request in nanoseconds.
+	// TotalDuration is the total request time in nanoseconds.
 	TotalDuration int64 `json:"total_duration"`
-	// Duration spent loading the model in nanoseconds.
+	// LoadDuration is the model load time in nanoseconds.
 	LoadDuration int64 `json:"load_duration"`
-	// Number of tokens in the prompt evaluated.
+	// PromptEvalCount is the number of prompt tokens evaluated.
 	PromptEvalCount int `json:"prompt_eval_count"`
-	// Duration spent evaluating the prompt in nanoseconds.
+	// PromptEvalDuration is the prompt evaluation time in nanoseconds.
 	PromptEvalDuration int64 `json:"prompt_eval_duration"`
-	// Number of tokens in the response evaluated.
+	// EvalCount is the number of tokens generated during response.
 	EvalCount int `json:"eval_count"`
-	// Duration spent evaluating the response in nanoseconds.
+	// EvalDuration is the response evaluation time in nanoseconds.
 	EvalDuration int64 `json:"eval_duration"`
 }
 
@@ -728,7 +733,10 @@ func formatMeta(meta LLMResponseMeta) string {
 	))
 }
 
-// StartGUI starts the graphical user interface for the chat application.
+// StartGUI initializes and runs the interactive TUI for single-model chat.
+// It reads configuration from config.json, optionally switches to multimodel
+// mode, and blocks until the UI exits. It logs diagnostic output to debug.log
+// when enabled. StartGUI does not return a value.
 func StartGUI() {
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {

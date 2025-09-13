@@ -1,3 +1,4 @@
+// cmd/gollamacli/list_commands.go
 package gollamacli
 
 import (
@@ -7,33 +8,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// commandsCmd represents the 'list commands' subcommand.
-// It lists all available commands and subcommands of the gollamacli tool
-// in a hierarchical, indented format with two-column alignment.
+// commandsCmd implements 'list commands', which prints the available
+// commands and subcommands in a hierarchical, indented, two-column format.
 var commandsCmd = &cobra.Command{
 	Use:   "commands",
-	Short: "List all available commands and subcommands in two columns",
-	Long: `The 'commands' subcommand lists all available commands and subcommands
-in a hierarchical, indented format, presented in two columns for better readability.
-The first column displays the command path, and the second column shows the
-short description of each command.
-
-This provides a comprehensive overview of all the actions that can be performed
-by the gollamacli tool, with a clear and aligned output.`,
+	Short: "List all commands and subcommands in two columns",
+	Long:  `The 'commands' subcommand lists all commands and subcommands in a hierarchical, indented format, with the command path in the first column and its short description in the second column.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listAllCommands(rootCmd) // Call the listing function without initial indent
+		listAllCommands(rootCmd)
 	},
 }
 
-// init adds the commands subcommand to the list command.
 func init() {
 	listCmd.AddCommand(commandsCmd)
 }
 
-// listAllCommands recursively traverses the command tree starting from the given cmd,
-// and prints each command's name and short description in a two-column format.
-// The first column is for the command path (indented for hierarchy), and the
-// second column is for the short description, aligned for readability.
+// listAllCommands recursively traverses the command tree starting from rootCmd
+// and prints each command path and short description in a padded, two-column layout.
 func listAllCommands(rootCmd *cobra.Command) {
 	commandData := collectCommandData(rootCmd, "", "")
 
@@ -46,7 +37,7 @@ func listAllCommands(rootCmd *cobra.Command) {
 
 	fmt.Println("Commands and Subcommands:")
 	for _, data := range commandData {
-		fmt.Printf("  %s%s%s\n", data.path, strings.Repeat(" ", maxPathLength-len(data.path)+2), data.description) // +2 for a little extra space
+		fmt.Printf("  %s%s%s\n", data.path, strings.Repeat(" ", maxPathLength-len(data.path)+2), data.description)
 	}
 }
 
@@ -55,6 +46,8 @@ type commandInfo struct {
 	description string
 }
 
+// collectCommandData collects command metadata for display, walking the
+// command tree and returning a flattened slice of path/description pairs.
 func collectCommandData(cmd *cobra.Command, currentPath string, indent string) []commandInfo {
 	var allData []commandInfo
 
@@ -70,7 +63,7 @@ func collectCommandData(cmd *cobra.Command, currentPath string, indent string) [
 	allData = append(allData, data)
 
 	for _, subCmd := range cmd.Commands() {
-		allData = append(allData, collectCommandData(subCmd, fullPath, indent+"  ")...) // Indent subcommands further with two spaces
+		allData = append(allData, collectCommandData(subCmd, fullPath, indent+"  ")...)
 	}
 
 	return allData

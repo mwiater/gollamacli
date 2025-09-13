@@ -1,23 +1,18 @@
+// cmd/gollamacli/list.go
 package gollamacli
 
 import (
 	"github.com/spf13/cobra"
 )
 
-// listCmd represents the 'list' command.
-// It serves as a command group for listing related subcommands,
-// such as 'list commands' to show all available commands.
+// listCmd represents the 'list' command group and acts as a namespace
+// for subcommands that list information (for example, commands or models).
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Group commands for listing resources",
-	Long: `The 'list' command is used to group subcommands that provide
-different ways to list resources or information related to gollamacli.
-It does not perform any actions on its own but serves as a namespace
-for more specific listing commands.`,
-	// No Run functionality; this command exists solely to group subcommands.
+	Long:  `The 'list' command groups related subcommands that list resources or information. It performs no action on its own.`,
 }
 
-// init adds the list command to the root command.
 func init() {
 	rootCmd.AddCommand(listCmd)
 }

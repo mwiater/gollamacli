@@ -1,3 +1,4 @@
+// cmd/gollamacli/sync_models.go
 package gollamacli
 
 import (
@@ -5,7 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// syncModelsCmd represents the 'sync models' subcommand.
+// syncModelsCmd implements 'sync models', which deletes models not in the
+// configuration and then pulls any missing models across supported hosts.
 var syncModelsCmd = &cobra.Command{
 	Use:   "models",
 	Short: "Sync all models from the config.json file",
@@ -15,7 +17,6 @@ var syncModelsCmd = &cobra.Command{
 	},
 }
 
-// init adds the syncModelsCmd to the syncCmd.
 func init() {
 	syncCmd.AddCommand(syncModelsCmd)
 }

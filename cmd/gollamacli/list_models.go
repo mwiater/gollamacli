@@ -1,3 +1,4 @@
+// cmd/gollamacli/list_models.go
 package gollamacli
 
 import (
@@ -5,7 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// listModelsCmd represents the 'list models' subcommand.
+// listModelsCmd implements 'list models', which enumerates all models on
+// each configured host and indicates which models are currently loaded.
 var listModelsCmd = &cobra.Command{
 	Use:   "models",
 	Short: "List all models on each node",
@@ -15,7 +17,6 @@ var listModelsCmd = &cobra.Command{
 	},
 }
 
-// init adds the listModelsCmd to the listCmd.
 func init() {
 	listCmd.AddCommand(listModelsCmd)
 }

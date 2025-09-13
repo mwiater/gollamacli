@@ -1,3 +1,4 @@
+// cmd/gollamacli/unload_models.go
 package gollamacli
 
 import (
@@ -5,7 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// unloadModelsCmd represents the 'unload models' subcommand.
+// unloadModelsCmd implements 'unload models', which unloads all currently
+// loaded models on each supported host.
 var unloadModelsCmd = &cobra.Command{
 	Use:   "models",
 	Short: "Unload all loaded models on each host",
@@ -15,7 +17,6 @@ var unloadModelsCmd = &cobra.Command{
 	},
 }
 
-// init adds the unloadModelsCmd to the root command.
 func init() {
 	unloadCmd.AddCommand(unloadModelsCmd)
 }

@@ -1,3 +1,4 @@
+// models/models.go
 package models
 
 import (
@@ -18,7 +19,9 @@ const (
 	configFile = "config.json"
 )
 
-// Host represents a single host in the config
+// Host represents a single host entry in the configuration.
+// It includes a display name, base URL, host type ("ollama" or "lmstudio"),
+// and a list of associated model identifiers.
 type Host struct {
 	Name   string   `json:"name"`
 	URL    string   `json:"url"`
@@ -26,13 +29,15 @@ type Host struct {
 	Models []string `json:"models"`
 }
 
-// Config represents the application's configuration
+// Config is the application's configuration structure containing the set of hosts
+// and global flags such as debug mode.
 type Config struct {
 	Hosts []Host `json:"hosts"`
 	Debug bool   `json:"debug"`
 }
 
-// LLMHost defines the interface for a host
+// LLMHost defines the model lifecycle and metadata operations a host must support.
+// Implementations should pull, delete, list, and unload models, and expose basic metadata.
 type LLMHost interface {
 	PullModel(model string)
 	DeleteModel(model string)
@@ -43,40 +48,46 @@ type LLMHost interface {
 	GetModels() []string
 }
 
-// OllamaHost is an implementation of LLMHost for Ollama
+// OllamaHost implements LLMHost for Ollama servers.
 type OllamaHost struct {
 	Name   string
 	URL    string
 	Models []string
 }
 
-// LMStudioHost is an implementation of LLMHost for LM Studio
+// LMStudioHost implements LLMHost for LM Studio.
 type LMStudioHost struct {
 	Name   string
 	URL    string
 	Models []string
 }
 
+// GetName returns the display name of the Ollama host.
 func (h *OllamaHost) GetName() string {
 	return h.Name
 }
 
+// GetType returns the type identifier for Ollama hosts ("ollama").
 func (h *OllamaHost) GetType() string {
 	return "ollama"
 }
 
+// GetModels returns the configured models for the Ollama host.
 func (h *OllamaHost) GetModels() []string {
 	return h.Models
 }
 
+// GetName returns the display name of the LM Studio host.
 func (h *LMStudioHost) GetName() string {
 	return h.Name
 }
 
+// GetType returns the type identifier for LM Studio hosts ("lmstudio").
 func (h *LMStudioHost) GetType() string {
 	return "lmstudio"
 }
 
+// GetModels returns the configured models for the LM Studio host.
 func (h *LMStudioHost) GetModels() []string {
 	return h.Models
 }
@@ -111,7 +122,9 @@ func createHosts(config Config) []LLMHost {
 	return hosts
 }
 
-// PullModels reads models from config.json and pulls them to each node.
+// PullModels reads models from config.json and pulls them to each supported host.
+// For Ollama hosts, it issues /api/pull requests for each configured model.
+// LM Studio hosts do not support pull and are skipped with a message.
 func PullModels() {
 	config, err := loadConfig()
 	if err != nil {
@@ -140,7 +153,7 @@ func PullModels() {
 	fmt.Println("All model pull commands have finished.")
 }
 
-// pullModel pulls a model to a single node.
+// PullModel pulls the provided model to the Ollama host via the /api/pull endpoint.
 func (h *OllamaHost) PullModel(model string) {
 	url := fmt.Sprintf("%s/api/pull", h.URL)
 	payload := map[string]string{"name": model}
@@ -151,11 +164,12 @@ func (h *OllamaHost) PullModel(model string) {
 	}
 }
 
+// PullModel logs that model pulling is not supported for LM Studio hosts.
 func (h *LMStudioHost) PullModel(model string) {
 	fmt.Printf("Pulling models is not supported for LM Studio host: %s\n", h.Name)
 }
 
-// DeleteModels reads config.json and deletes any models not on the list from each node.
+// DeleteModels reads config.json and deletes any models not on the list from each supported host.
 func DeleteModels() {
 	config, err := loadConfig()
 	if err != nil {
@@ -180,7 +194,7 @@ func DeleteModels() {
 	fmt.Println("All model cleanup commands have finished.")
 }
 
-// deleteModelsOnNode deletes any models not on the list from a single node.
+// deleteModelsOnNode deletes models on a single host that are not present in modelsToKeep.
 func deleteModelsOnNode(host LLMHost, modelsToKeep []string) {
 	fmt.Printf("Starting model cleanup for %s...\n", host.GetName())
 	models, err := host.ListModels()
@@ -195,7 +209,6 @@ func deleteModelsOnNode(host LLMHost, modelsToKeep []string) {
 	}
 
 	for _, installedModel := range models {
-		// Extract model name from the formatted string
 		parts := strings.Split(installedModel, " ")
 		modelName := parts[1]
 		if _, keep := modelsToKeepSet[modelName]; !keep {
@@ -207,7 +220,7 @@ func deleteModelsOnNode(host LLMHost, modelsToKeep []string) {
 	}
 }
 
-// deleteModel deletes a model from a single node.
+// DeleteModel deletes the specified model from an Ollama host via the /api/delete endpoint.
 func (h *OllamaHost) DeleteModel(model string) {
 	url := fmt.Sprintf("%s/api/delete", h.URL)
 	payload := map[string]string{"model": model}
@@ -220,11 +233,12 @@ func (h *OllamaHost) DeleteModel(model string) {
 	}
 }
 
+// DeleteModel logs that model deletion is not supported for LM Studio hosts.
 func (h *LMStudioHost) DeleteModel(model string) {
 	fmt.Printf("Deleting models is not supported for LM Studio host: %s\n", h.Name)
 }
 
-// UnloadModels unloads all currently loaded models on each host.
+// UnloadModels unloads all currently loaded models on each supported host.
 func UnloadModels() {
 	config, err := loadConfig()
 	if err != nil {
@@ -258,7 +272,7 @@ func UnloadModels() {
 	fmt.Println("All model unload commands have finished.")
 }
 
-// unloadModel unloads a model from a single node.
+// UnloadModel unloads a model from an Ollama host by sending a chat request with keep_alive set to 0.
 func (h *OllamaHost) UnloadModel(model string) {
 	url := fmt.Sprintf("%s/api/chat", h.URL)
 	payload := map[string]any{"model": model, "keep_alive": 0}
@@ -271,17 +285,18 @@ func (h *OllamaHost) UnloadModel(model string) {
 	}
 }
 
+// UnloadModel logs that unloading models is not supported for LM Studio hosts.
 func (h *LMStudioHost) UnloadModel(model string) {
 	fmt.Printf("Unloading models is not supported for LM Studio host: %s\n", h.Name)
 }
 
-// SyncModels runs DeleteModels and then PullModels.
+// SyncModels deletes any models not in config and then pulls missing models.
 func SyncModels() {
 	DeleteModels()
 	PullModels()
 }
 
-// ListModels lists all models on each node, indicating which are currently loaded.
+// ListModels lists models on each configured host, indicating which are currently loaded for Ollama hosts.
 func ListModels() {
 	config, err := loadConfig()
 	if err != nil {
@@ -328,7 +343,7 @@ func ListModels() {
 	}
 }
 
-// listModelsOnNode gets the models on a single node.
+// ListModels returns the models available on an Ollama host, labeling currently loaded models.
 func (h *OllamaHost) ListModels() ([]string, error) {
 	modelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
 	loadedModelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
@@ -370,6 +385,7 @@ func (h *OllamaHost) ListModels() ([]string, error) {
 	return models, nil
 }
 
+// ListModels returns the models available on an LM Studio host by querying /api/v0/models.
 func (h *LMStudioHost) ListModels() ([]string, error) {
 	modelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
 
@@ -401,7 +417,7 @@ func (h *LMStudioHost) ListModels() ([]string, error) {
 	return models, nil
 }
 
-// getRunningModels gets the running models on a single node.
+// getRunningModels returns the set of currently running models on an Ollama host by querying /api/ps.
 func (h *OllamaHost) getRunningModels() (map[string]struct{}, error) {
 	runningModels := make(map[string]struct{})
 	url := fmt.Sprintf("%s/api/ps", h.URL)

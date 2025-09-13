@@ -1,3 +1,4 @@
+// cli/cli_multimodel.go
 package cli
 
 import (
@@ -30,7 +31,7 @@ const (
 	multimodelViewChat
 )
 
-// hostModelAssignment represents a host with its assigned model
+// hostModelAssignment represents a host with its selected model assignment.
 type hostModelAssignment struct {
 	host          Host
 	selectedModel string
@@ -38,7 +39,7 @@ type hostModelAssignment struct {
 	isAssigned    bool
 }
 
-// multimodelColumnResponse holds the streaming response data for a single column
+// multimodelColumnResponse holds streaming state and metadata for a single column.
 type multimodelColumnResponse struct {
 	hostIndex        int
 	content          strings.Builder
@@ -49,7 +50,7 @@ type multimodelColumnResponse struct {
 	requestStartTime time.Time
 }
 
-// multimodelModel is the main application model for multimodel mode
+// multimodelModel is the Bubble Tea model for multimodel mode.
 type multimodelModel struct {
 	// Application configuration
 	config *Config
@@ -87,7 +88,7 @@ type multimodelModel struct {
 	program *tea.Program
 }
 
-// assignmentItem represents a host in the assignment list
+// assignmentItem represents a host row in the assignment list.
 type assignmentItem struct {
 	host          Host
 	assignedModel string
@@ -113,34 +114,34 @@ func (i assignmentItem) FilterValue() string {
 	return i.host.Name
 }
 
-// multimodelAssignmentsReadyMsg is sent when model assignments are loaded
+// multimodelAssignmentsReadyMsg is sent when model assignments are loaded.
 type multimodelAssignmentsReadyMsg struct{}
 
-// multimodelChatReadyMsg is sent when chat interface is ready
+// multimodelChatReadyMsg is sent when the chat interface is ready.
 type multimodelChatReadyMsg struct{}
 
-// multimodelChatReadyErr is sent when chat loading fails
+// multimodelChatReadyErr is sent when chat loading fails.
 type multimodelChatReadyErr error
 
-// multimodelStreamChunkMsg is sent for streaming response chunks
+// multimodelStreamChunkMsg carries a streaming message update for a column.
 type multimodelStreamChunkMsg struct {
 	hostIndex int
-	message   chatMessage // Change content to message
+	message   chatMessage
 }
 
-// multimodelStreamEndMsg is sent when a stream completes
+// multimodelStreamEndMsg is sent when a stream completes for a column.
 type multimodelStreamEndMsg struct {
 	hostIndex int
 	meta      LLMResponseMeta
 }
 
-// multimodelStreamErr is sent when a stream encounters an error
+// multimodelStreamErr is sent when a stream encounters an error.
 type multimodelStreamErr struct {
 	hostIndex int
 	err       error
 }
 
-// initialMultimodelModel creates a new multimodel with default values
+// initialMultimodelModel creates a new multimodel Bubble Tea model with defaults.
 func initialMultimodelModel(cfg *Config) *multimodelModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
@@ -157,7 +158,6 @@ func initialMultimodelModel(cfg *Config) *multimodelModel {
 
 	vp := viewport.New(100, 5)
 
-	// Initialize assignments
 	assignments := make([]hostModelAssignment, len(cfg.Hosts))
 	for i, host := range cfg.Hosts {
 		assignments[i] = hostModelAssignment{
@@ -167,7 +167,6 @@ func initialMultimodelModel(cfg *Config) *multimodelModel {
 		}
 	}
 
-	// Initialize column responses
 	var columnResponses [4]multimodelColumnResponse
 	for i := range columnResponses {
 		columnResponses[i] = multimodelColumnResponse{
@@ -190,34 +189,31 @@ func initialMultimodelModel(cfg *Config) *multimodelModel {
 	}
 }
 
-// loadMultimodelChatCmd prepares the chat interface for multimodel
+// loadMultimodelChatCmd prepares the chat interface for multimodel mode.
 func loadMultimodelChatCmd(assignments []hostModelAssignment) tea.Cmd {
 	return func() tea.Msg {
-		// In a real implementation, you might want to pre-load models here
-		// For now, we'll just signal that chat is ready
 		time.Sleep(time.Millisecond * 500) // Simulate loading
 		return multimodelChatReadyMsg{}
 	}
 }
 
-// multimodelStreamChatCmd initiates streaming chat for all assigned host/model pairs
-func multimodelStreamChatCmd(p *tea.Program, m *multimodelModel) tea.Cmd { // Pass the entire model
+// multimodelStreamChatCmd initiates streaming chat for all assigned host/model pairs.
+func multimodelStreamChatCmd(p *tea.Program, m *multimodelModel) tea.Cmd {
 	return func() tea.Msg {
-		// Start streaming for each assigned host/model pair
-		for i, assignment := range m.assignments { // Use m.assignments
+		for i, assignment := range m.assignments {
 			if assignment.isAssigned {
-				go func(hostIndex int, host Host, model string, history []chatMessage) { // Pass history to goroutine
-					if err := streamToColumn(p, hostIndex, host, model, history, m.client); err != nil { // Use m.client
+				go func(hostIndex int, host Host, model string, history []chatMessage) {
+					if err := streamToColumn(p, hostIndex, host, model, history, m.client); err != nil {
 						p.Send(multimodelStreamErr{hostIndex: hostIndex, err: err})
 					}
-				}(i, assignment.host, assignment.selectedModel, m.columnResponses[i].chatHistory) // Pass individual column history
+				}(i, assignment.host, assignment.selectedModel, m.columnResponses[i].chatHistory)
 			}
 		}
 		return nil
 	}
 }
 
-// streamToColumn handles streaming for a single column
+// streamToColumn streams chat responses for a single assigned column.
 func streamToColumn(p *tea.Program, hostIndex int, host Host, modelName string, history []chatMessage, client *http.Client) error {
 	payload := map[string]any{
 		"model":    modelName,
@@ -277,12 +273,12 @@ func streamToColumn(p *tea.Program, hostIndex int, host Host, modelName string, 
 	return nil
 }
 
-// Init initializes the multimodel Bubble Tea model
+// Init initializes the multimodel Bubble Tea model.
 func (m *multimodelModel) Init() tea.Cmd {
 	return m.spinner.Tick
 }
 
-// Update handles all message updates for multimodel mode
+// Update handles all message updates for multimodel mode.
 func (m *multimodelModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
@@ -323,12 +319,10 @@ func (m *multimodelModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case multimodelStreamChunkMsg:
 		if msg.hostIndex < len(m.columnResponses) {
-			// Check if there's an existing assistant message to append to
 			history := &m.columnResponses[msg.hostIndex].chatHistory
 			if len(*history) > 0 && (*history)[len(*history)-1].Role == "assistant" {
 				(*history)[len(*history)-1].Content += msg.message.Content
 			} else {
-				// Start a new assistant message
 				*history = append(*history, msg.message)
 			}
 			m.columnResponses[msg.hostIndex].isStreaming = true
@@ -340,7 +334,6 @@ func (m *multimodelModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.columnResponses[msg.hostIndex].meta = msg.meta
 			m.columnResponses[msg.hostIndex].isStreaming = false
 		}
-		// Check if all streams are done
 		allDone := true
 		for i, assignment := range m.assignments {
 			if assignment.isAssigned && i < len(m.columnResponses) && m.columnResponses[i].isStreaming {
@@ -353,13 +346,9 @@ func (m *multimodelModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textArea.Focus()
 			m.textArea.Reset()
 
-			// Add responses to chat history
 			for i, assignment := range m.assignments {
 				if assignment.isAssigned && i < len(m.columnResponses) && m.columnResponses[i].content.Len() > 0 {
-					// For multimodel, we might want to store responses differently
-					// For now, we'll just store the first response in history
 					if len(m.chatHistory) > 0 && m.chatHistory[len(m.chatHistory)-1].Role == "user" {
-						// Add combined response
 						var combinedResponse strings.Builder
 						for j, a := range m.assignments {
 							if a.isAssigned && j < len(m.columnResponses) && m.columnResponses[j].content.Len() > 0 {
@@ -555,19 +544,16 @@ func (m *multimodelModel) assignmentView() string {
 	for i, assignment := range m.assignments {
 		var line strings.Builder
 
-		// Selection indicator
 		if i == m.selectedHostIndex {
 			line.WriteString("> ")
 		} else {
 			line.WriteString("  ")
 		}
 
-		// Host name
 		hostStyle := lipgloss.NewStyle().Bold(true)
 		line.WriteString(hostStyle.Render(assignment.host.Name))
 		line.WriteString(" → ")
 
-		// Assigned model or placeholder
 		if assignment.isAssigned {
 			modelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
 			line.WriteString(modelStyle.Render(assignment.selectedModel))
@@ -581,11 +567,9 @@ func (m *multimodelModel) assignmentView() string {
 
 	builder.WriteString("\n")
 
-	// Instructions
 	helpStyle := lipgloss.NewStyle().Faint(true)
 	builder.WriteString(helpStyle.Render("↑/↓: Navigate  Enter: Select Model  C: Start Chat  Q: Quit\n"))
 
-	// Chat button if assignments exist
 	hasAssignment := false
 	for _, assignment := range m.assignments {
 		if assignment.isAssigned {
@@ -606,16 +590,13 @@ func (m *multimodelModel) assignmentView() string {
 func (m *multimodelModel) multimodelChatView() string {
 	var builder strings.Builder
 
-	// Header
 	headerStyle := lipgloss.NewStyle().Background(lipgloss.Color("62")).Foreground(lipgloss.Color("230")).Padding(0, 1)
 	header := headerStyle.Render("Multimodel Chat")
 	help := lipgloss.NewStyle().Faint(true).Render(" (tab to reassign, q to quit)")
 	builder.WriteString(header + help + "\n\n")
 
-	// Calculate column width
 	colWidth := (m.width - 8) / 4 // Account for borders and spacing
 
-	// Column headers
 	var headerCells []string
 	for i := 0; i < 4; i++ {
 		var colHeader string
@@ -638,8 +619,6 @@ func (m *multimodelModel) multimodelChatView() string {
 	headerRow := lipgloss.JoinHorizontal(lipgloss.Top, headerCells...)
 	builder.WriteString(headerRow + "\n")
 
-	// Response columns
-	// Calculate dynamic height for chat history
 	chatHeight := m.height - lipgloss.Height(headerRow) - lipgloss.Height(m.textArea.View()) - 5 // Adjust 5 for padding/margins
 
 	var chatRows []string
@@ -656,14 +635,14 @@ func (m *multimodelModel) multimodelChatView() string {
 				for _, msg := range m.columnResponses[i].chatHistory {
 					var role, content string
 					if msg.Role == "assistant" {
-						role = assistantStyle.Render("Assistant: ")
+						role = assistantStyle.Render("Assistant!: ")
 						content = msg.Content
 					} else {
 						role = userStyle.Render("You: ")
 						content = msg.Content
 					}
-					wrappedContent := lipgloss.NewStyle().Width(colWidth - lipgloss.Width(role) - 2).Render(content)
-					colChatHistory.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, role, wrappedContent) + "\n")
+					wrappedContent := lipgloss.NewStyle().Width(colWidth - 2).Render(content)
+					colChatHistory.WriteString(role + "\n" + wrappedContent + "\n\n")
 				}
 			}
 		}
@@ -679,7 +658,6 @@ func (m *multimodelModel) multimodelChatView() string {
 	}
 	builder.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, chatRows...) + "\n")
 
-	// Input area or loading indicator
 	var loadingIndicators []string
 	for i := range m.columnResponses {
 		if m.columnResponses[i].isStreaming {
@@ -697,7 +675,9 @@ func (m *multimodelModel) multimodelChatView() string {
 	return builder.String()
 }
 
-// StartMultimodelGUI starts the multimodel GUI
+// StartMultimodelGUI initializes and runs the four-column multimodel chat UI.
+// It accepts a parsed Config, sets up the Bubble Tea program, and blocks until
+// the UI exits. StartMultimodelGUI returns an error if the TUI cannot be run.
 func StartMultimodelGUI(cfg *Config) error {
 	m := initialMultimodelModel(cfg)
 	m.client = &http.Client{

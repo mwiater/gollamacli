@@ -1,3 +1,4 @@
+// cmd/gollamacli/delete_models.go
 package gollamacli
 
 import (
@@ -5,7 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// deleteModelsCmd represents the 'delete models' subcommand.
+// deleteModelsCmd implements 'delete models', which removes models not listed
+// in the configuration from each supported host.
 var deleteModelsCmd = &cobra.Command{
 	Use:   "models",
 	Short: "Delete all models not in the config.json file",
@@ -15,7 +17,6 @@ var deleteModelsCmd = &cobra.Command{
 	},
 }
 
-// init adds the deleteModelsCmd to the deleteCmd.
 func init() {
 	deleteCmd.AddCommand(deleteModelsCmd)
 }

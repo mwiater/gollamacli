@@ -1,3 +1,4 @@
+// cmd/gollamacli/pull_models.go
 package gollamacli
 
 import (
@@ -5,7 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// pullModelsCmd represents the 'pull models' subcommand.
+// pullModelsCmd implements 'pull models', which pulls all configured models
+// to each supported host defined in the configuration file.
 var pullModelsCmd = &cobra.Command{
 	Use:   "models",
 	Short: "Pull all models from the config.json file",
@@ -15,7 +17,6 @@ var pullModelsCmd = &cobra.Command{
 	},
 }
 
-// init adds the pullModelsCmd to the pullCmd.
 func init() {
 	pullCmd.AddCommand(pullModelsCmd)
 }
