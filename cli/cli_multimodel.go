@@ -642,7 +642,7 @@ func (m *multimodelModel) multimodelChatView() string {
 						content = msg.Content
 					}
 					wrappedContent := lipgloss.NewStyle().Width(colWidth - 2).Render(content)
-					colChatHistory.WriteString(role + "\n" + wrappedContent + "\n\n")
+					colChatHistory.WriteString(role + "\n  " + wrappedContent + "\n\n")
 				}
 			}
 		}
