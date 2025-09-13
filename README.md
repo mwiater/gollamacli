@@ -1,15 +1,15 @@
-# gollamacli CLI
+# gollamacli
 
-gollamacli CLI is a powerful, terminal-based application designed for seamless interaction with large language models through the Ollama API. It offers a rich set of features to streamline your workflow, whether you're managing a single local model or a distributed network of language model hosts.
+gollamacli is a powerful, terminal-based application designed for seamless interaction with large language models through the Ollama API. It offers a rich set of features to streamline your workflow, whether you're managing a single local model or a distributed network of language model hosts.
 
 ## Key Features
 
-*   **Multiple Host Management:** Connect to and switch between multiple Ollama and LM Studio hosts defined in a simple `config.json` file.
-*   **Interactive Chat:** Engage in conversations with your chosen language model through a user-friendly terminal interface.
-*   **Multimodel Chat:** Chat with multiple models from different hosts simultaneously in a single interface.
-*   **Model Synchronization:** Keep your models consistent across all your hosts with a single command. The `sync` feature will automatically pull missing models and delete any models that are not defined in your configuration file.
-*   **Efficient Model Management:** Easily list, pull, delete, and unload models on your hosts.
-*   **Debug Mode:** Gain insights into performance with detailed metrics for model loading, prompt evaluation, and response generation.
+- **Multiple Host Management:** Connect to and switch between multiple Ollama and LM Studio hosts defined in a simple `config.json` file.
+- **Interactive Chat:** Engage in conversations with your chosen language model through a user-friendly terminal interface.
+- **Multimodel Chat:** Chat with multiple models from different hosts simultaneously in a single interface.
+- **Model Synchronization:** Keep your models consistent across all your hosts with a single command. The `sync` feature will automatically pull missing models and delete any models that are not defined in your configuration file.
+- **Efficient Model Management:** Easily list, pull, delete, and unload models on your hosts.
+- **Debug Mode:** Gain insights into performance with detailed metrics for model loading, prompt evaluation, and response generation.
 
 ## Installation
 
@@ -21,9 +21,9 @@ go install github.com/mwiater/gollamacli/cmd/gollamacli@latest
 
 ## Configuration
 
-Before running the application, you need to create a `config.json` file in the same directory as the `gollamacli` executable. This file defines the available Ollama hosts and other settings.
+Before running the application, you need to create a `config.json` file in the same directory as the `gollamacli` executable. This file defines the available hosts and other settings.
 
-### `config.json` format:
+### `config.json` format
 
 ```json
 {
@@ -60,15 +60,15 @@ Before running the application, you need to create a `config.json` file in the s
 }
 ```
 
-### Configuration Options:
+### Configuration Options
 
-*   `hosts`: A list of Ollama hosts to connect to. Each host object should have:
-    *   `name`: A user-friendly name for the host (e.g., "Local Ollama", "Work Server").
-    *   `url`: The URL of the Ollama API endpoint (e.g., "http://localhost:11434").
-    *   `type`: The type of host, either "ollama" or "lmstudio".
-    *   `models`: A list of models to be managed by the tool for this host.
-*   `debug`: A boolean value (`true` or `false`) that toggles debug mode. When enabled, performance metrics are displayed after each response.
-*   `multimodel`: A boolean value (`true` or `false`) that toggles multimodel chat mode.
+- `hosts`: A list of Ollama or LM Studio hosts to connect to. Each host object includes:
+  - `name`: A user-friendly name for the host (e.g., "Local Ollama", "Work Server").
+  - `url`: The URL of the API endpoint (e.g., `http://localhost:11434`).
+  - `type`: The type of host, either `ollama` or `lmstudio`.
+  - `models`: A list of models to be managed by the tool for this host.
+- `debug`: A boolean value (`true` or `false`) that toggles debug mode. When enabled, performance metrics are displayed after each response.
+- `multimodel`: A boolean value (`true` or `false`) that toggles multimodel chat mode.
 
 ## Usage
 
@@ -88,35 +88,31 @@ If `multimodel` is set to `true`, you will enter the multimodel chat interface, 
 
 The following commands are available for managing models:
 
-*   **List Models:** List all models on each node.
-    ```bash
-    gollamacli list models
-    ```
+- **List Models**
+  ```bash
+  gollamacli list models
+  ```
+- **Pull Models**
+  ```bash
+  gollamacli pull models
+  ```
+- **Delete Models**
+  ```bash
+  gollamacli delete models
+  ```
+- **Sync Models**
+  ```bash
+  gollamacli sync models
+  ```
+- **Unload Models**
+  ```bash
+  gollamacli unload models
+  ```
 
-*   **Pull Models:** Pull all models from the `config.json` file to each node.
-    ```bash
-    gollamacli pull models
-    ```
+### Keyboard Shortcuts (Chat)
 
-*   **Delete Models:** Delete all models not in the `config.json` file from each node.
-    ```bash
-    gollamacli delete models
-    ```
-
-*   **Sync Models:** Sync all models from the `config.json` file to each node. This will delete any models not in the `config.json` file and pull any missing models.
-    ```bash
-    gollamacli sync models
-    ```
-
-*   **Unload Models:** Unload all currently loaded models on each host.
-    ```bash
-    gollamacli unload models
-    ```
-
-### Keyboard Shortcuts (Chat):
-
-*   `q` or `Ctrl+c`: Quit the application.
-*   `Tab`: Return to the host/model selection screen from the chat view.
+- `q` or `Ctrl+c`: Quit the application.
+- `Tab`: Return to the host/model selection screen from the chat view.
 
 ## Build Instructions
 
@@ -132,28 +128,53 @@ This will create a snapshot release, which is a test release that doesn't create
 
 When `debug` is set to `true` in `config.json`, the following performance metrics will be displayed after each response from the model:
 
-*   **Model Load Duration:** The time it took to load the model into memory.
-*   **Prompt Eval:**
-    *   **Duration:** The time it took to process the prompt.
-    *   **Tokens:** The number of tokens in the prompt.
-*   **Response Eval:**
-    *   **Duration:** The time it took to generate the response.
-    *   **Tokens:** The number of tokens in the response.
-*   **Total Duration:** The total time from sending the request to receiving the full response.
+- **Model Load Duration:** The time it took to load the model into memory.
+- **Prompt Eval:**
+  - **Duration:** The time it took to process the prompt.
+  - **Tokens:** The number of tokens in the prompt.
+- **Response Eval:**
+  - **Duration:** The time it took to generate the response.
+  - **Tokens:** The number of tokens in the response.
+- **Total Duration:** The total time from sending the request to receiving the full response.
 
 A `debug.log` file is also created to log detailed information about the application's execution.
 
 ## Godoc
 
-Install: `go install -v golang.org/x/tools/cmd/godoc@latest`
+Install:
 
-Run: `godoc -http=:6060`
+```bash
+go install -v golang.org/x/tools/cmd/godoc@latest
+```
+
+Run:
+
+```bash
+godoc -http=:6060
+```
 
 ## Tests
 
-`go test ./...`
+Run the test suite:
+
+```bash
+go test ./...
+```
 
 ## Coverage
 
-Generate Coverage Report: `go test ./... -coverprofile=.coverage/coverage.out`
-Console Report: `go tool cover -func=.coverage/coverage.out`
+Generate a coverage report:
+
+```bash
+mkdir -p .coverage
+go test ./... -coverprofile=.coverage/coverage.out
+go tool cover -func=.coverage/coverage.out
+```
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. Ensure that tests run successfully before submitting your contribution.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
