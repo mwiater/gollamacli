@@ -2,7 +2,7 @@
   "hosts": [
     {
       "name": "Ollama01",
-      "url": "http://localhost:11434",
+      "url": "http://192.168.0.10:11434",
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
@@ -16,14 +16,13 @@
       ]
     },
     {
-      "name": "LMStudio01",
-      "url": "http://localhost:1234",
-      "type": "lmstudio",
+      "name": "Ollama02",
+      "url": "http://192.168.0.11:11434",
+      "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
         "granite3.3:2b",
-        "dolphin-phi:2.7b",
-        "qwen3:1.7b"
+        "gemma3n:e2b"
       ]
     }
   ],

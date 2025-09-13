@@ -4,7 +4,7 @@ gollamacli is a powerful, terminal-based application designed for seamless inter
 
 ## Key Features
 
-- **Multiple Host Management:** Connect to and switch between multiple Ollama and LM Studio hosts defined in a simple `config.json` file.
+- **Multiple Host Management:** Connect to and switch between multiple hosts defined in a simple `config.json` file (currently supports Ollama).
 - **Interactive Chat:** Engage in conversations with your chosen language model through a user-friendly terminal interface.
 - **Multimodel Chat:** Chat with multiple models from different hosts simultaneously in a single interface.
 - **Model Synchronization:** Keep your models consistent across all your hosts with a single command. The `sync` feature will automatically pull missing models and delete any models that are not defined in your configuration file.
@@ -30,7 +30,7 @@ Before running the application, you need to create a `config.json` file in the s
   "hosts": [
     {
       "name": "Ollama01",
-      "url": "http://localhost:11434",
+      "url": "http://192.168.0.10:11434",
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
@@ -44,14 +44,13 @@ Before running the application, you need to create a `config.json` file in the s
       ]
     },
     {
-      "name": "LMStudio01",
-      "url": "http://localhost:1234",
-      "type": "lmstudio",
+      "name": "Ollama02",
+      "url": "http://192.168.0.11:11434",
+      "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
         "granite3.3:2b",
-        "dolphin-phi:2.7b",
-        "qwen3:1.7b"
+        "gemma3n:e2b"
       ]
     }
   ],
@@ -62,10 +61,10 @@ Before running the application, you need to create a `config.json` file in the s
 
 ### Configuration Options
 
-- `hosts`: A list of Ollama or LM Studio hosts to connect to. Each host object includes:
+- `hosts`: A list of hosts to connect to. Each host object includes (currently only `ollama` is supported):
   - `name`: A user-friendly name for the host (e.g., "Local Ollama", "Work Server").
   - `url`: The URL of the API endpoint (e.g., `http://localhost:11434`).
-  - `type`: The type of host, either `ollama` or `lmstudio`.
+  - `type`: The type of host (e.g., `ollama`).
   - `models`: A list of models to be managed by the tool for this host.
 - `debug`: A boolean value (`true` or `false`) that toggles debug mode. When enabled, performance metrics are displayed after each response.
 - `multimodel`: A boolean value (`true` or `false`) that toggles multimodel chat mode.

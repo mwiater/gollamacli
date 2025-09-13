@@ -69,13 +69,13 @@ func Test_loadConfig_SuccessAndMissing(t *testing.T) {
 }
 
 func Test_createHosts_BuildsTypesAndIgnoresUnknown(t *testing.T) {
-	cfg := Config{Hosts: []Host{{Name: "o", URL: "u1", Type: "ollama"}, {Name: "l", URL: "u2", Type: "lmstudio"}, {Name: "x", URL: "u3", Type: "unknown"}}}
+	cfg := Config{Hosts: []Host{{Name: "o", URL: "u1", Type: "ollama"}, {Name: "x", URL: "u2", Type: "unknown"}}}
 	hosts := createHosts(cfg)
-	if len(hosts) != 2 {
-		t.Fatalf("expected 2 hosts, got %d", len(hosts))
+	if len(hosts) != 1 {
+		t.Fatalf("expected 1 host, got %d", len(hosts))
 	}
-	if hosts[0].GetType() != "ollama" || hosts[1].GetType() != "lmstudio" {
-		t.Fatalf("unexpected types: %s, %s", hosts[0].GetType(), hosts[1].GetType())
+	if hosts[0].GetType() != "ollama" {
+		t.Fatalf("unexpected type: %s", hosts[0].GetType())
 	}
 }
 
@@ -190,7 +190,7 @@ func Test_getRunningModels_ParsesNames(t *testing.T) {
 	}
 }
 
-func Test_ListModels_OllamaAndLMStudio(t *testing.T) {
+func Test_OllamaHost_ListModels(t *testing.T) {
 	// Ollama server
 	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -204,16 +204,6 @@ func Test_ListModels_OllamaAndLMStudio(t *testing.T) {
 	}))
 	t.Cleanup(ollama.Close)
 
-	// LM Studio server
-	lm := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/v0/models" {
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{"id": "lm1"}, {"id": "lm2"}}})
-			return
-		}
-		w.WriteHeader(http.StatusNotFound)
-	}))
-	t.Cleanup(lm.Close)
-
 	oh := &OllamaHost{Name: "o", URL: ollama.URL}
 	gotO, err := oh.ListModels()
 	if err != nil {
@@ -223,18 +213,9 @@ func Test_ListModels_OllamaAndLMStudio(t *testing.T) {
 	if !strings.Contains(joined, "x") || !strings.Contains(joined, "y") {
 		t.Fatalf("expected x and y in %v", gotO)
 	}
-
-	lh := &LMStudioHost{Name: "l", URL: lm.URL}
-	gotL, err := lh.ListModels()
-	if err != nil {
-		t.Fatalf("lmstudio ListModels err: %v", err)
-	}
-	if !strings.Contains(strings.Join(gotL, " "), "lm1") {
-		t.Fatalf("expected lm1 in %v", gotL)
-	}
 }
 
-func Test_PullModels_SkipsLMStudioAndCallsOllama(t *testing.T) {
+func Test_PullModels_CallsOllama(t *testing.T) {
 	withTempWorkdir(t)
 
 	var ollamaHits int
@@ -245,32 +226,19 @@ func Test_PullModels_SkipsLMStudioAndCallsOllama(t *testing.T) {
 	}))
 	t.Cleanup(ollama.Close)
 
-	var lmHits int
-	lm := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		lmHits++
-	}))
-	t.Cleanup(lm.Close)
-
 	cfg := Config{Hosts: []Host{
 		{Name: "o", URL: ollama.URL, Type: "ollama", Models: []string{"m1"}},
-		{Name: "l", URL: lm.URL, Type: "lmstudio", Models: []string{"n1"}},
 	}}
 	writeConfig(t, cfg)
 
-	out := captureOutput(t, PullModels)
+	_ = captureOutput(t, PullModels)
 
 	if ollamaHits != 1 {
 		t.Fatalf("expected 1 pull hit, got %d", ollamaHits)
 	}
-	if lmHits != 0 {
-		t.Fatalf("expected 0 LM Studio hits, got %d", lmHits)
-	}
-	if !strings.Contains(out, "Pulling models is not supported for l (lmstudio)") {
-		t.Fatalf("missing LM Studio skip message: %q", out)
-	}
 }
 
-func Test_DeleteModels_SkipsLMStudioAndCallsOllama(t *testing.T) {
+func Test_DeleteModels_CallsOllama(t *testing.T) {
 	withTempWorkdir(t)
 
 	var deleteHits int
@@ -288,32 +256,19 @@ func Test_DeleteModels_SkipsLMStudioAndCallsOllama(t *testing.T) {
 	}))
 	t.Cleanup(ollama.Close)
 
-	var lmHits int
-	lm := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		lmHits++
-	}))
-	t.Cleanup(lm.Close)
-
 	cfg := Config{Hosts: []Host{
 		{Name: "o", URL: ollama.URL, Type: "ollama", Models: []string{"keep"}},
-		{Name: "l", URL: lm.URL, Type: "lmstudio", Models: []string{"x"}},
 	}}
 	writeConfig(t, cfg)
 
-	out := captureOutput(t, DeleteModels)
+	_ = captureOutput(t, DeleteModels)
 
 	if deleteHits != 1 {
 		t.Fatalf("expected 1 delete hit, got %d", deleteHits)
 	}
-	if lmHits != 0 {
-		t.Fatalf("expected 0 LM Studio hits, got %d", lmHits)
-	}
-	if !strings.Contains(out, "Deleting models is not supported for l (lmstudio)") {
-		t.Fatalf("missing LM Studio skip message: %q", out)
-	}
 }
 
-func Test_UnloadModels_SkipsLMStudioAndCallsOllama(t *testing.T) {
+func Test_UnloadModels_CallsOllama(t *testing.T) {
 	withTempWorkdir(t)
 
 	var unloadHits int
@@ -329,28 +284,15 @@ func Test_UnloadModels_SkipsLMStudioAndCallsOllama(t *testing.T) {
 	}))
 	t.Cleanup(ollama.Close)
 
-	var lmHits int
-	lm := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		lmHits++
-	}))
-	t.Cleanup(lm.Close)
-
 	cfg := Config{Hosts: []Host{
 		{Name: "o", URL: ollama.URL, Type: "ollama"},
-		{Name: "l", URL: lm.URL, Type: "lmstudio"},
 	}}
 	writeConfig(t, cfg)
 
-	out := captureOutput(t, UnloadModels)
+	_ = captureOutput(t, UnloadModels)
 
 	if unloadHits != 1 {
 		t.Fatalf("expected 1 unload hit, got %d", unloadHits)
-	}
-	if lmHits != 0 {
-		t.Fatalf("expected 0 LM Studio hits, got %d", lmHits)
-	}
-	if !strings.Contains(out, "Unloading models is not supported for l (lmstudio)") {
-		t.Fatalf("missing LM Studio skip message: %q", out)
 	}
 }
 
@@ -373,7 +315,7 @@ func Test_ListModels_TopLevel_SortsAndAggregates(t *testing.T) {
 	t.Setenv("NO_COLOR", "1")
 
 	// success Ollama host named 'b'
-	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	good := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/ps":
 			_ = json.NewEncoder(w).Encode(map[string]any{"models": []map[string]any{}})
@@ -383,17 +325,17 @@ func Test_ListModels_TopLevel_SortsAndAggregates(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	t.Cleanup(ollama.Close)
+	t.Cleanup(good.Close)
 
-	// failing LM Studio host named 'a'
+	// failing Ollama host named 'a'
 	bad := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	t.Cleanup(bad.Close)
 
 	cfg := Config{Hosts: []Host{
-		{Name: "b", URL: ollama.URL, Type: "ollama"},
-		{Name: "a", URL: bad.URL, Type: "lmstudio"},
+		{Name: "b", URL: good.URL, Type: "ollama"},
+		{Name: "a", URL: bad.URL, Type: "ollama"},
 	}}
 	writeConfig(t, cfg)
 
@@ -409,32 +351,6 @@ func Test_ListModels_TopLevel_SortsAndAggregates(t *testing.T) {
 	}
 	if !strings.Contains(out, "Error:") {
 		t.Fatalf("expected error message for host a: %q", out)
-	}
-}
-
-func Test_LMStudioHost_DeleteAndUnloadMessages(t *testing.T) {
-	h := &LMStudioHost{Name: "l"}
-
-	delMsg := captureOutput(t, func() { h.DeleteModel("m") })
-	if !strings.Contains(delMsg, "Deleting models is not supported for LM Studio host: l") {
-		t.Fatalf("unexpected delete message: %q", delMsg)
-	}
-
-	unloadMsg := captureOutput(t, func() { h.UnloadModel("m") })
-	if !strings.Contains(unloadMsg, "Unloading models is not supported for LM Studio host: l") {
-		t.Fatalf("unexpected unload message: %q", unloadMsg)
-	}
-}
-
-func Test_LMStudioHost_ListModels_Error(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("{bad"))
-	}))
-	t.Cleanup(srv.Close)
-
-	h := &LMStudioHost{Name: "l", URL: srv.URL}
-	if _, err := h.ListModels(); err == nil || !strings.Contains(err.Error(), "error parsing models") {
-		t.Fatalf("expected parse error, got %v", err)
 	}
 }
 

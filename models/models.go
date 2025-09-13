@@ -20,8 +20,8 @@ const (
 )
 
 // Host represents a single host entry in the configuration.
-// It includes a display name, base URL, host type ("ollama" or "lmstudio"),
-// and a list of associated model identifiers.
+// It includes a display name, base URL, host type, and a list of associated
+// model identifiers. Currently only `ollama` hosts are supported.
 type Host struct {
 	Name   string   `json:"name"`
 	URL    string   `json:"url"`
@@ -55,13 +55,6 @@ type OllamaHost struct {
 	Models []string
 }
 
-// LMStudioHost implements LLMHost for LM Studio.
-type LMStudioHost struct {
-	Name   string
-	URL    string
-	Models []string
-}
-
 // GetName returns the display name of the Ollama host.
 func (h *OllamaHost) GetName() string {
 	return h.Name
@@ -74,21 +67,6 @@ func (h *OllamaHost) GetType() string {
 
 // GetModels returns the configured models for the Ollama host.
 func (h *OllamaHost) GetModels() []string {
-	return h.Models
-}
-
-// GetName returns the display name of the LM Studio host.
-func (h *LMStudioHost) GetName() string {
-	return h.Name
-}
-
-// GetType returns the type identifier for LM Studio hosts ("lmstudio").
-func (h *LMStudioHost) GetType() string {
-	return "lmstudio"
-}
-
-// GetModels returns the configured models for the LM Studio host.
-func (h *LMStudioHost) GetModels() []string {
 	return h.Models
 }
 
@@ -113,8 +91,6 @@ func createHosts(config Config) []LLMHost {
 		switch hostConfig.Type {
 		case "ollama":
 			hosts = append(hosts, &OllamaHost{Name: hostConfig.Name, URL: hostConfig.URL, Models: hostConfig.Models})
-		case "lmstudio":
-			hosts = append(hosts, &LMStudioHost{Name: hostConfig.Name, URL: hostConfig.URL, Models: hostConfig.Models})
 		default:
 			fmt.Printf("Unknown host type: %s\n", hostConfig.Type)
 		}
@@ -124,7 +100,6 @@ func createHosts(config Config) []LLMHost {
 
 // PullModels reads models from config.json and pulls them to each supported host.
 // For Ollama hosts, it issues /api/pull requests for each configured model.
-// LM Studio hosts do not support pull and are skipped with a message.
 func PullModels() {
 	config, err := loadConfig()
 	if err != nil {
@@ -162,11 +137,6 @@ func (h *OllamaHost) PullModel(model string) {
 	if err != nil {
 		fmt.Printf("Error pulling model %s on %s: %v\n", model, h.Name, err)
 	}
-}
-
-// PullModel logs that model pulling is not supported for LM Studio hosts.
-func (h *LMStudioHost) PullModel(model string) {
-	fmt.Printf("Pulling models is not supported for LM Studio host: %s\n", h.Name)
 }
 
 // DeleteModels reads config.json and deletes any models not on the list from each supported host.
@@ -233,11 +203,6 @@ func (h *OllamaHost) DeleteModel(model string) {
 	}
 }
 
-// DeleteModel logs that model deletion is not supported for LM Studio hosts.
-func (h *LMStudioHost) DeleteModel(model string) {
-	fmt.Printf("Deleting models is not supported for LM Studio host: %s\n", h.Name)
-}
-
 // UnloadModels unloads all currently loaded models on each supported host.
 func UnloadModels() {
 	config, err := loadConfig()
@@ -283,11 +248,6 @@ func (h *OllamaHost) UnloadModel(model string) {
 	if err != nil {
 		fmt.Printf("Error unloading model %s on %s: %v\n", model, h.Name, err)
 	}
-}
-
-// UnloadModel logs that unloading models is not supported for LM Studio hosts.
-func (h *LMStudioHost) UnloadModel(model string) {
-	fmt.Printf("Unloading models is not supported for LM Studio host: %s\n", h.Name)
 }
 
 // function aliases allow tests to spy call order.
@@ -387,38 +347,6 @@ func (h *OllamaHost) ListModels() ([]string, error) {
 		} else {
 			models = append(models, modelStyle.Render(fmt.Sprintf("- %s", model.Name)))
 		}
-	}
-	return models, nil
-}
-
-// ListModels returns the models available on an LM Studio host by querying /api/v0/models.
-func (h *LMStudioHost) ListModels() ([]string, error) {
-	modelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
-
-	url := fmt.Sprintf("%s/api/v0/models", h.URL)
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("could not list models: LM Studio is not accessible on %s", h.Name)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading response body from %s: %v", h.Name, err)
-	}
-
-	var modelsResp struct {
-		Data []struct {
-			ID string `json:"id"`
-		} `json:"data"`
-	}
-	if err := json.Unmarshal(body, &modelsResp); err != nil {
-		return nil, fmt.Errorf("error parsing models from %s: %v", h.Name, err)
-	}
-
-	var models []string
-	for _, model := range modelsResp.Data {
-		models = append(models, modelStyle.Render(fmt.Sprintf("- %s", model.ID)))
 	}
 	return models, nil
 }
