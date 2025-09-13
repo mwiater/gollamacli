@@ -1,217 +1,219 @@
 package models
 
 import (
-    "bytes"
-    "encoding/json"
-    "io"
-    "net/http"
-    "net/http/httptest"
-    "os"
-    "path/filepath"
-    "strings"
-    "testing"
+	"bytes"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
 )
 
 // Test helper to create a temporary working directory and chdir into it.
 func withTempWorkdir(t *testing.T) string {
-    t.Helper()
-    dir := t.TempDir()
-    if err := os.Chdir(dir); err != nil {
-        t.Fatalf("chdir temp: %v", err)
-    }
-    return dir
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("chdir temp: %v", err)
+	}
+	return dir
 }
 
 func writeConfig(t *testing.T, cfg Config) {
-    t.Helper()
-    b, _ := json.Marshal(cfg)
-    if err := os.WriteFile(filepath.Join(".", "config.json"), b, 0o644); err != nil {
-        t.Fatalf("write config: %v", err)
-    }
+	t.Helper()
+	b, _ := json.Marshal(cfg)
+	if err := os.WriteFile(filepath.Join(".", "config.json"), b, 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
 }
 
 func Test_loadConfig_SuccessAndMissing(t *testing.T) {
-    withTempWorkdir(t)
+	withTempWorkdir(t)
 
-    // Missing file
-    if _, err := loadConfig(); err == nil {
-        t.Fatalf("expected error for missing config.json")
-    }
+	// Missing file
+	if _, err := loadConfig(); err == nil {
+		t.Fatalf("expected error for missing config.json")
+	}
 
-    // Success
-    cfg := Config{Hosts: []Host{{Name: "h", URL: "http://example", Type: "ollama", Models: []string{"m1"}}}}
-    writeConfig(t, cfg)
-    got, err := loadConfig()
-    if err != nil {
-        t.Fatalf("loadConfig error: %v", err)
-    }
-    if len(got.Hosts) != 1 || got.Hosts[0].Name != "h" {
-        t.Fatalf("unexpected cfg: %+v", got)
-    }
+	// Success
+	cfg := Config{Hosts: []Host{{Name: "h", URL: "http://example", Type: "ollama", Models: []string{"m1"}}}}
+	writeConfig(t, cfg)
+	got, err := loadConfig()
+	if err != nil {
+		t.Fatalf("loadConfig error: %v", err)
+	}
+	if len(got.Hosts) != 1 || got.Hosts[0].Name != "h" {
+		t.Fatalf("unexpected cfg: %+v", got)
+	}
 }
 
 func Test_createHosts_BuildsTypesAndIgnoresUnknown(t *testing.T) {
-    cfg := Config{Hosts: []Host{{Name: "o", URL: "u1", Type: "ollama"}, {Name: "l", URL: "u2", Type: "lmstudio"}, {Name: "x", URL: "u3", Type: "unknown"}}}
-    hosts := createHosts(cfg)
-    if len(hosts) != 2 {
-        t.Fatalf("expected 2 hosts, got %d", len(hosts))
-    }
-    if hosts[0].GetType() != "ollama" || hosts[1].GetType() != "lmstudio" {
-        t.Fatalf("unexpected types: %s, %s", hosts[0].GetType(), hosts[1].GetType())
-    }
+	cfg := Config{Hosts: []Host{{Name: "o", URL: "u1", Type: "ollama"}, {Name: "l", URL: "u2", Type: "lmstudio"}, {Name: "x", URL: "u3", Type: "unknown"}}}
+	hosts := createHosts(cfg)
+	if len(hosts) != 2 {
+		t.Fatalf("expected 2 hosts, got %d", len(hosts))
+	}
+	if hosts[0].GetType() != "ollama" || hosts[1].GetType() != "lmstudio" {
+		t.Fatalf("unexpected types: %s, %s", hosts[0].GetType(), hosts[1].GetType())
+	}
 }
 
 func Test_OllamaHost_PullModel(t *testing.T) {
-    var gotPath string
-    var gotBody []byte
-    srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        gotPath = r.URL.Path
-        b, _ := io.ReadAll(r.Body)
-        gotBody = b
-        w.WriteHeader(http.StatusOK)
-    }))
-    t.Cleanup(srv.Close)
+	var gotPath string
+	var gotBody []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		b, _ := io.ReadAll(r.Body)
+		gotBody = b
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
 
-    h := &OllamaHost{Name: "h", URL: srv.URL, Models: nil}
-    h.PullModel("mod1")
-    if gotPath != "/api/pull" {
-        t.Fatalf("expected /api/pull, got %s", gotPath)
-    }
-    if !bytes.Contains(gotBody, []byte(`"name":"mod1"`)) {
-        t.Fatalf("unexpected body: %s", string(gotBody))
-    }
+	h := &OllamaHost{Name: "h", URL: srv.URL, Models: nil}
+	h.PullModel("mod1")
+	if gotPath != "/api/pull" {
+		t.Fatalf("expected /api/pull, got %s", gotPath)
+	}
+	if !bytes.Contains(gotBody, []byte(`"name":"mod1"`)) {
+		t.Fatalf("unexpected body: %s", string(gotBody))
+	}
 }
 
 func Test_deleteModelsOnNode_DeletesExtras(t *testing.T) {
-    sh := &stubHost{}
-    deleteModelsOnNode(sh, sh.GetModels())
-    got := strings.Join(sh.deleted, ",")
-    if !strings.Contains(got, "del1") || !strings.Contains(got, "del2") {
-        t.Fatalf("expected deletions of del1,del2; got %s", got)
-    }
+	sh := &stubHost{}
+	deleteModelsOnNode(sh, sh.GetModels())
+	got := strings.Join(sh.deleted, ",")
+	if !strings.Contains(got, "del1") || !strings.Contains(got, "del2") {
+		t.Fatalf("expected deletions of del1,del2; got %s", got)
+	}
 }
 
 // stubHost implements LLMHost for unit tests of deleteModelsOnNode.
 type stubHost struct{ deleted []string }
 
-func (s *stubHost) PullModel(string)              {}
-func (s *stubHost) DeleteModel(m string)          { s.deleted = append(s.deleted, m) }
-func (s *stubHost) ListModels() ([]string, error) { return []string{"- keep", "- del1", "- del2 (CURRENTLY LOADED)"}, nil }
-func (s *stubHost) UnloadModel(string)            {}
-func (s *stubHost) GetName() string               { return "stub" }
-func (s *stubHost) GetType() string               { return "ollama" }
-func (s *stubHost) GetModels() []string           { return []string{"keep"} }
+func (s *stubHost) PullModel(string)     {}
+func (s *stubHost) DeleteModel(m string) { s.deleted = append(s.deleted, m) }
+func (s *stubHost) ListModels() ([]string, error) {
+	return []string{"- keep", "- del1", "- del2 (CURRENTLY LOADED)"}, nil
+}
+func (s *stubHost) UnloadModel(string)  {}
+func (s *stubHost) GetName() string     { return "stub" }
+func (s *stubHost) GetType() string     { return "ollama" }
+func (s *stubHost) GetModels() []string { return []string{"keep"} }
 
 func Test_OllamaHost_DeleteModel(t *testing.T) {
-    var gotMethod, gotPath string
-    var gotBody []byte
-    srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        gotMethod = r.Method
-        gotPath = r.URL.Path
-        b, _ := io.ReadAll(r.Body)
-        gotBody = b
-        w.WriteHeader(http.StatusOK)
-    }))
-    t.Cleanup(srv.Close)
+	var gotMethod, gotPath string
+	var gotBody []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotMethod = r.Method
+		gotPath = r.URL.Path
+		b, _ := io.ReadAll(r.Body)
+		gotBody = b
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
 
-    h := &OllamaHost{Name: "h", URL: srv.URL}
-    h.DeleteModel("mx")
-    if gotMethod != http.MethodDelete || gotPath != "/api/delete" {
-        t.Fatalf("unexpected %s %s", gotMethod, gotPath)
-    }
-    if !bytes.Contains(gotBody, []byte(`"model":"mx"`)) {
-        t.Fatalf("unexpected body: %s", string(gotBody))
-    }
+	h := &OllamaHost{Name: "h", URL: srv.URL}
+	h.DeleteModel("mx")
+	if gotMethod != http.MethodDelete || gotPath != "/api/delete" {
+		t.Fatalf("unexpected %s %s", gotMethod, gotPath)
+	}
+	if !bytes.Contains(gotBody, []byte(`"model":"mx"`)) {
+		t.Fatalf("unexpected body: %s", string(gotBody))
+	}
 }
 
 func Test_OllamaHost_UnloadModel(t *testing.T) {
-    var gotPath string
-    var gotBody []byte
-    srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        gotPath = r.URL.Path
-        b, _ := io.ReadAll(r.Body)
-        gotBody = b
-        w.WriteHeader(http.StatusOK)
-    }))
-    t.Cleanup(srv.Close)
+	var gotPath string
+	var gotBody []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		b, _ := io.ReadAll(r.Body)
+		gotBody = b
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
 
-    h := &OllamaHost{Name: "h", URL: srv.URL}
-    h.UnloadModel("mm")
-    if gotPath != "/api/chat" {
-        t.Fatalf("expected /api/chat, got %s", gotPath)
-    }
-    if !bytes.Contains(gotBody, []byte(`"keep_alive":0`)) || !bytes.Contains(gotBody, []byte(`"model":"mm"`)) {
-        t.Fatalf("unexpected body: %s", string(gotBody))
-    }
+	h := &OllamaHost{Name: "h", URL: srv.URL}
+	h.UnloadModel("mm")
+	if gotPath != "/api/chat" {
+		t.Fatalf("expected /api/chat, got %s", gotPath)
+	}
+	if !bytes.Contains(gotBody, []byte(`"keep_alive":0`)) || !bytes.Contains(gotBody, []byte(`"model":"mm"`)) {
+		t.Fatalf("unexpected body: %s", string(gotBody))
+	}
 }
 
 func Test_getRunningModels_ParsesNames(t *testing.T) {
-    srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        if r.URL.Path == "/api/ps" {
-            _ = json.NewEncoder(w).Encode(map[string]any{
-                "models": []map[string]any{{"name": "a"}, {"name": "b"}},
-            })
-            return
-        }
-        w.WriteHeader(http.StatusNotFound)
-    }))
-    t.Cleanup(srv.Close)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/ps" {
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"models": []map[string]any{{"name": "a"}, {"name": "b"}},
+			})
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(srv.Close)
 
-    h := &OllamaHost{Name: "h", URL: srv.URL}
-    got, err := h.getRunningModels()
-    if err != nil {
-        t.Fatalf("getRunningModels error: %v", err)
-    }
-    if _, ok := got["a"]; !ok {
-        t.Fatalf("expected 'a' present")
-    }
-    if _, ok := got["b"]; !ok {
-        t.Fatalf("expected 'b' present")
-    }
+	h := &OllamaHost{Name: "h", URL: srv.URL}
+	got, err := h.getRunningModels()
+	if err != nil {
+		t.Fatalf("getRunningModels error: %v", err)
+	}
+	if _, ok := got["a"]; !ok {
+		t.Fatalf("expected 'a' present")
+	}
+	if _, ok := got["b"]; !ok {
+		t.Fatalf("expected 'b' present")
+	}
 }
 
 func Test_ListModels_OllamaAndLMStudio(t *testing.T) {
-    // Ollama server
-    ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        switch r.URL.Path {
-        case "/api/ps":
-            _ = json.NewEncoder(w).Encode(map[string]any{"models": []map[string]any{{"name": "x"}}})
-        case "/api/tags":
-            _ = json.NewEncoder(w).Encode(map[string]any{"models": []map[string]any{{"name": "x"}, {"name": "y"}}})
-        default:
-            w.WriteHeader(http.StatusNotFound)
-        }
-    }))
-    t.Cleanup(ollama.Close)
+	// Ollama server
+	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/ps":
+			_ = json.NewEncoder(w).Encode(map[string]any{"models": []map[string]any{{"name": "x"}}})
+		case "/api/tags":
+			_ = json.NewEncoder(w).Encode(map[string]any{"models": []map[string]any{{"name": "x"}, {"name": "y"}}})
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(ollama.Close)
 
-    // LM Studio server
-    lm := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        if r.URL.Path == "/api/v0/models" {
-            _ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{"id": "lm1"}, {"id": "lm2"}}})
-            return
-        }
-        w.WriteHeader(http.StatusNotFound)
-    }))
-    t.Cleanup(lm.Close)
+	// LM Studio server
+	lm := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v0/models" {
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{"id": "lm1"}, {"id": "lm2"}}})
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(lm.Close)
 
-    oh := &OllamaHost{Name: "o", URL: ollama.URL}
-    gotO, err := oh.ListModels()
-    if err != nil {
-        t.Fatalf("ollama ListModels err: %v", err)
-    }
-    joined := strings.Join(gotO, " ")
-    if !strings.Contains(joined, "x") || !strings.Contains(joined, "y") {
-        t.Fatalf("expected x and y in %v", gotO)
-    }
+	oh := &OllamaHost{Name: "o", URL: ollama.URL}
+	gotO, err := oh.ListModels()
+	if err != nil {
+		t.Fatalf("ollama ListModels err: %v", err)
+	}
+	joined := strings.Join(gotO, " ")
+	if !strings.Contains(joined, "x") || !strings.Contains(joined, "y") {
+		t.Fatalf("expected x and y in %v", gotO)
+	}
 
-    lh := &LMStudioHost{Name: "l", URL: lm.URL}
-    gotL, err := lh.ListModels()
-    if err != nil {
-        t.Fatalf("lmstudio ListModels err: %v", err)
-    }
-    if !strings.Contains(strings.Join(gotL, " "), "lm1") {
-        t.Fatalf("expected lm1 in %v", gotL)
-    }
+	lh := &LMStudioHost{Name: "l", URL: lm.URL}
+	gotL, err := lh.ListModels()
+	if err != nil {
+		t.Fatalf("lmstudio ListModels err: %v", err)
+	}
+	if !strings.Contains(strings.Join(gotL, " "), "lm1") {
+		t.Fatalf("expected lm1 in %v", gotL)
+	}
 }
 
 // (no helpers)

@@ -142,3 +142,12 @@ When `debug` is set to `true` in `config.json`, the following performance metric
 *   **Total Duration:** The total time from sending the request to receiving the full response.
 
 A `debug.log` file is also created to log detailed information about the application's execution.
+
+## Tests
+
+` go test ./...`
+
+## Coverage
+
+`go test ./... -coverprofile=.coverage/coverage.out`
+`go tool cover -func=.coverage/coverage.out`
