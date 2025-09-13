@@ -290,10 +290,16 @@ func (h *LMStudioHost) UnloadModel(model string) {
 	fmt.Printf("Unloading models is not supported for LM Studio host: %s\n", h.Name)
 }
 
+// function aliases allow tests to spy call order.
+var (
+	deleteModelsFunc = DeleteModels
+	pullModelsFunc   = PullModels
+)
+
 // SyncModels deletes any models not in config and then pulls missing models.
 func SyncModels() {
-	DeleteModels()
-	PullModels()
+	deleteModelsFunc()
+	pullModelsFunc()
 }
 
 // ListModels lists models on each configured host, indicating which are currently loaded for Ollama hosts.

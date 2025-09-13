@@ -143,11 +143,17 @@ When `debug` is set to `true` in `config.json`, the following performance metric
 
 A `debug.log` file is also created to log detailed information about the application's execution.
 
+## Godoc
+
+Install: `go install -v golang.org/x/tools/cmd/godoc@latest`
+
+Run: `godoc -http=:6060`
+
 ## Tests
 
-` go test ./...`
+`go test ./...`
 
 ## Coverage
 
-`go test ./... -coverprofile=.coverage/coverage.out`
-`go tool cover -func=.coverage/coverage.out`
+Generate Coverage Report: `go test ./... -coverprofile=.coverage/coverage.out`
+Console Report: `go tool cover -func=.coverage/coverage.out`
