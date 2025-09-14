@@ -12,14 +12,33 @@ import (
 	"testing"
 )
 
-// Test helper to create a temporary working directory and chdir into it.
-func withTempWorkdir(t *testing.T) string {
+// Test helper to create and chdir into a temporary working directory.
+// It returns the directory path and a cleanup function to chdir back.
+func withTempWorkdir(t *testing.T) (string, func()) {
 	t.Helper()
+
+	// 1. Get the original working directory
+	oldWd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+
+	// 2. Create the temp directory
 	dir := t.TempDir()
+
+	// 3. Change into the new directory
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("chdir temp: %v", err)
 	}
-	return dir
+
+	// 4. Return the path and a function that restores the original directory
+	cleanup := func() {
+		if err := os.Chdir(oldWd); err != nil {
+			t.Fatalf("chdir back: %v", err)
+		}
+	}
+
+	return dir, cleanup
 }
 
 func writeConfig(t *testing.T, cfg Config) {
@@ -49,7 +68,8 @@ func captureOutput(t *testing.T, f func()) string {
 }
 
 func Test_loadConfig_SuccessAndMissing(t *testing.T) {
-	withTempWorkdir(t)
+	_, cleanup := withTempWorkdir(t)
+	defer cleanup()
 
 	// Missing file
 	if _, err := loadConfig(); err == nil {
@@ -216,7 +236,8 @@ func Test_OllamaHost_ListModels(t *testing.T) {
 }
 
 func Test_PullModels_CallsOllama(t *testing.T) {
-	withTempWorkdir(t)
+	_, cleanup := withTempWorkdir(t)
+	defer cleanup()
 
 	var ollamaHits int
 	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -239,7 +260,8 @@ func Test_PullModels_CallsOllama(t *testing.T) {
 }
 
 func Test_DeleteModels_CallsOllama(t *testing.T) {
-	withTempWorkdir(t)
+	_, cleanup := withTempWorkdir(t)
+	defer cleanup()
 
 	var deleteHits int
 	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -269,7 +291,8 @@ func Test_DeleteModels_CallsOllama(t *testing.T) {
 }
 
 func Test_UnloadModels_CallsOllama(t *testing.T) {
-	withTempWorkdir(t)
+	_, cleanup := withTempWorkdir(t)
+	defer cleanup()
 
 	var unloadHits int
 	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -311,7 +334,9 @@ func Test_SyncModels_CallsInOrder(t *testing.T) {
 }
 
 func Test_ListModels_TopLevel_SortsAndAggregates(t *testing.T) {
-	withTempWorkdir(t)
+	_, cleanup := withTempWorkdir(t)
+	defer cleanup()
+
 	t.Setenv("NO_COLOR", "1")
 
 	// success Ollama host named 'b'
