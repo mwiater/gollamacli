@@ -13,7 +13,8 @@
         "granite3.1-moe:1b",
         "dolphin-phi:2.7b",
         "qwen3:1.7b"
-      ]
+      ],
+      "systemprompt": ""
     },
     {
       "name": "Ollama02",
@@ -23,10 +24,10 @@
         "stablelm-zephyr:3b",
         "granite3.3:2b",
         "gemma3n:e2b"
-      ]
+      ],
+      "systemprompt": ""
     }
   ],
   "debug": true,
-  "multimodel": false,
-  "systemprompt": ""
+  "multimodel": false
 }

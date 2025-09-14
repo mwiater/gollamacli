@@ -56,7 +56,8 @@ Before running the application, you need to create a `config.json` file in the s
         "granite3.1-moe:1b",
         "dolphin-phi:2.7b",
         "qwen3:1.7b"
-      ]
+      ],
+      "systemprompt": ""
     },
     {
       "name": "Ollama02",
@@ -66,12 +67,12 @@ Before running the application, you need to create a `config.json` file in the s
         "stablelm-zephyr:3b",
         "granite3.3:2b",
         "gemma3n:e2b"
-      ]
+      ],
+      "systemprompt": ""
     }
   ],
   "debug": true,
-  "multimodel": false,
-  "systemprompt": ""
+  "multimodel": false
 }
 ```
 
@@ -82,9 +83,9 @@ Before running the application, you need to create a `config.json` file in the s
   - `url`: The URL of the API endpoint (e.g., `http://localhost:11434`).
   - `type`: The type of host (e.g., `ollama`).
   - `models`: A list of models to be managed by the tool for this host.
+  - `systemprompt`: Sets a custom system prompt for all requests to thios host. When empty, the model's default system prompt is used.
 - `debug`: A boolean value (`true` or `false`) that toggles debug mode. When enabled, performance metrics are displayed after each response.
 - `multimodel`: A boolean value (`true` or `false`) that toggles multimodel chat mode.
-- `systemprompt`: Sets a custom system prompt for all requests. When empty, the model's default system prompt is used.
 
 ## Usage
 

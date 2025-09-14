@@ -33,6 +33,8 @@ type Host struct {
 	URL string `json:"url"`
 	// Models lists the model identifiers that are available or desired on the host.
 	Models []string `json:"models"`
+	// SystemPrompt sets a custom system prompt for all requests; when empty, the model's default is used.
+	SystemPrompt string `json:"systemprompt"`
 }
 
 // Config contains application settings that drive the CLI/TUI behavior.
@@ -44,8 +46,6 @@ type Config struct {
 	Debug bool `json:"debug"`
 	// Multimodel toggles the four-column chat interface for multiple models.
 	Multimodel bool `json:"multimodel"`
-	// SystemPrompt sets a custom system prompt for all requests; when empty, the model's default is used.
-	SystemPrompt string `json:"systemprompt"`
 }
 
 // loadConfig reads and parses the configuration file from the given path.
@@ -612,7 +612,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textArea.Reset()
 				m.isLoading = true
 				m.err = nil
-				cmds = append(cmds, m.spinner.Tick, streamChatCmd(m.program, m.selectedHost, m.selectedModel, m.chatHistory, m.config.SystemPrompt, m.client))
+				cmds = append(cmds, m.spinner.Tick, streamChatCmd(m.program, m.selectedHost, m.selectedModel, m.chatHistory, m.selectedHost.SystemPrompt, m.client))
 			}
 		}
 	}

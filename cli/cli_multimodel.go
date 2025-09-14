@@ -203,7 +203,7 @@ func multimodelStreamChatCmd(p *tea.Program, m *multimodelModel) tea.Cmd {
 		for i, assignment := range m.assignments {
 			if assignment.isAssigned {
 				go func(hostIndex int, host Host, model string, history []chatMessage) {
-					if err := streamToColumn(p, hostIndex, host, model, history, m.config.SystemPrompt, m.client); err != nil {
+					if err := streamToColumn(p, hostIndex, host, model, history, host.SystemPrompt, m.client); err != nil {
 						p.Send(multimodelStreamErr{hostIndex: hostIndex, err: err})
 					}
 				}(i, assignment.host, assignment.selectedModel, m.columnResponses[i].chatHistory)
