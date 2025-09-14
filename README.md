@@ -45,6 +45,21 @@ Before running the application, you need to create a `config.json` file in the s
     },
     {
       "name": "Ollama02",
+            "url": "http://192.168.0.10:11434",
+      "type": "ollama",
+      "models": [
+        "stablelm-zephyr:3b",
+        "granite3.3:2b",
+        "gemma3n:e2b",
+        "deepseek-r1:1.5b",
+        "llama3.2:1b",
+        "granite3.1-moe:1b",
+        "dolphin-phi:2.7b",
+        "qwen3:1.7b"
+      ]
+    },
+    {
+      "name": "Ollama02",
       "url": "http://192.168.0.11:11434",
       "type": "ollama",
       "models": [
@@ -55,7 +70,8 @@ Before running the application, you need to create a `config.json` file in the s
     }
   ],
   "debug": true,
-  "multimodel": false
+  "multimodel": false,
+  "systemprompt": ""
 }
 ```
 
@@ -68,6 +84,7 @@ Before running the application, you need to create a `config.json` file in the s
   - `models`: A list of models to be managed by the tool for this host.
 - `debug`: A boolean value (`true` or `false`) that toggles debug mode. When enabled, performance metrics are displayed after each response.
 - `multimodel`: A boolean value (`true` or `false`) that toggles multimodel chat mode.
+- `systemprompt`: Sets a custom system prompt for all requests. When empty, the model's default system prompt is used.
 
 ## Usage
 

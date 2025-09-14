@@ -27,5 +27,6 @@
     }
   ],
   "debug": true,
-  "multimodel": false
+  "multimodel": false,
+  "systemprompt": ""
 }

@@ -44,6 +44,8 @@ type Config struct {
 	Debug bool `json:"debug"`
 	// Multimodel toggles the four-column chat interface for multiple models.
 	Multimodel bool `json:"multimodel"`
+	// SystemPrompt sets a custom system prompt for all requests; when empty, the model's default is used.
+	SystemPrompt string `json:"systemprompt"`
 }
 
 // loadConfig reads and parses the configuration file from the given path.
@@ -407,11 +409,15 @@ func loadModelCmd(host Host, modelName string, client *http.Client) tea.Cmd {
 // responses chunk by chunk.
 // It sends streamChunkMsg for each new chunk and streamEndMsg when the stream completes.
 // Errors during streaming result in a streamErr message.
-func streamChatCmd(p *tea.Program, host Host, modelName string, history []chatMessage, client *http.Client) tea.Cmd {
+func streamChatCmd(p *tea.Program, host Host, modelName string, history []chatMessage, systemPrompt string, client *http.Client) tea.Cmd {
 	return func() tea.Msg {
+		messages := history
+		if systemPrompt != "" {
+			messages = append([]chatMessage{{Role: "system", Content: systemPrompt}}, messages...)
+		}
 		payload := map[string]any{
 			"model":    modelName,
-			"messages": history,
+			"messages": messages,
 			"stream":   true,
 		}
 		body, _ := json.Marshal(payload)
@@ -606,7 +612,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textArea.Reset()
 				m.isLoading = true
 				m.err = nil
-				cmds = append(cmds, m.spinner.Tick, streamChatCmd(m.program, m.selectedHost, m.selectedModel, m.chatHistory, m.client))
+				cmds = append(cmds, m.spinner.Tick, streamChatCmd(m.program, m.selectedHost, m.selectedModel, m.chatHistory, m.config.SystemPrompt, m.client))
 			}
 		}
 	}

@@ -203,7 +203,7 @@ func multimodelStreamChatCmd(p *tea.Program, m *multimodelModel) tea.Cmd {
 		for i, assignment := range m.assignments {
 			if assignment.isAssigned {
 				go func(hostIndex int, host Host, model string, history []chatMessage) {
-					if err := streamToColumn(p, hostIndex, host, model, history, m.client); err != nil {
+					if err := streamToColumn(p, hostIndex, host, model, history, m.config.SystemPrompt, m.client); err != nil {
 						p.Send(multimodelStreamErr{hostIndex: hostIndex, err: err})
 					}
 				}(i, assignment.host, assignment.selectedModel, m.columnResponses[i].chatHistory)
@@ -214,10 +214,14 @@ func multimodelStreamChatCmd(p *tea.Program, m *multimodelModel) tea.Cmd {
 }
 
 // streamToColumn streams chat responses for a single assigned column.
-func streamToColumn(p *tea.Program, hostIndex int, host Host, modelName string, history []chatMessage, client *http.Client) error {
+func streamToColumn(p *tea.Program, hostIndex int, host Host, modelName string, history []chatMessage, systemPrompt string, client *http.Client) error {
+	messages := history
+	if systemPrompt != "" {
+		messages = append([]chatMessage{{Role: "system", Content: systemPrompt}}, messages...)
+	}
 	payload := map[string]any{
 		"model":    modelName,
-		"messages": history,
+		"messages": messages,
 		"stream":   true,
 	}
 	body, _ := json.Marshal(payload)
