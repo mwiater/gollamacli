@@ -605,14 +605,36 @@ func (m *multimodelModel) multimodelChatView() string {
 	for i := 0; i < 4; i++ {
 		var colHeader string
 		if i < len(m.assignments) && m.assignments[i].isAssigned {
-			colHeader = fmt.Sprintf("%s\n%s", m.assignments[i].host.Name, m.assignments[i].selectedModel)
+			// Build stats line from response meta if available
+			stats := ""
+			if i < len(m.columnResponses) {
+				meta := m.columnResponses[i].meta
+				if meta.TotalDuration > 0 {
+					totalSecs := float64(meta.TotalDuration) / 1e9
+					var tps float64
+					if totalSecs > 0 {
+						tps = float64(meta.EvalCount) / totalSecs
+					}
+					stats = fmt.Sprintf("T/S: %.1f | Time: %.1fs", tps, totalSecs)
+				}
+			}
+			hostStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("62"))
+			modelStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("62"))
+			statsStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("238"))
+
+			colHeader = fmt.Sprintf(
+				"%s\n%s\n%s",
+				hostStyle.Render(m.assignments[i].host.Name),
+				modelStyle.Render(m.assignments[i].selectedModel),
+				statsStyle.Render(stats),
+			)
 		} else {
-			colHeader = "Empty\n"
+			colHeader = "Empty\n\n"
 		}
 
 		colHeaderStyle := lipgloss.NewStyle().
 			Width(colWidth).
-			Height(2).
+			Height(3).
 			Border(lipgloss.NormalBorder()).
 			BorderForeground(lipgloss.Color("238")).
 			Align(lipgloss.Center).
@@ -623,7 +645,7 @@ func (m *multimodelModel) multimodelChatView() string {
 	headerRow := lipgloss.JoinHorizontal(lipgloss.Top, headerCells...)
 	builder.WriteString(headerRow + "\n")
 
-	chatHeight := m.height - lipgloss.Height(headerRow) - lipgloss.Height(m.textArea.View()) - 5 // Adjust 5 for padding/margins
+	chatHeight := m.height - lipgloss.Height(headerRow) - lipgloss.Height(m.textArea.View()) - 10 // Adjust for padding/margins
 
 	var chatRows []string
 	for i := 0; i < 4; i++ {
