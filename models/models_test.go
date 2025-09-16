@@ -141,6 +141,7 @@ func (s *stubHost) UnloadModel(string)  {}
 func (s *stubHost) GetName() string     { return "stub" }
 func (s *stubHost) GetType() string     { return "ollama" }
 func (s *stubHost) GetModels() []string { return []string{"keep"} }
+func (s *stubHost) GetModelParameters() ([]ModelParameters, error) { return nil, nil }
 
 func Test_OllamaHost_DeleteModel(t *testing.T) {
 	var gotMethod, gotPath string

@@ -13,7 +13,26 @@ import (
 	"sync"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/k0kubun/pp"
 )
+
+// ModelParameters holds the detailed parameters of a model.
+type ModelParameters struct {
+	Model      string       `json:"model,omitempty"`
+	License    string       `json:"license,omitempty"`
+	Modelfile  string       `json:"modelfile,omitempty"`
+	Parameters string       `json:"parameters,omitempty"`
+	Template   string       `json:"template,omitempty"`
+	Details    ModelDetails `json:"details,omitempty"`
+}
+
+// ModelDetails holds the nested details of a model.
+type ModelDetails struct {
+	Family            string `json:"family,omitempty"`
+	Format            string `json:"format,omitempty"`
+	ParameterSize     string `json:"parameter_size,omitempty"`
+	QuantizationLevel string `json:"quantization_level,omitempty"`
+}
 
 const (
 	configFile = "config.json"
@@ -46,6 +65,7 @@ type LLMHost interface {
 	GetName() string
 	GetType() string
 	GetModels() []string
+	GetModelParameters() ([]ModelParameters, error)
 }
 
 // OllamaHost implements LLMHost for Ollama servers.
@@ -380,4 +400,164 @@ func (h *OllamaHost) getRunningModels() (map[string]struct{}, error) {
 	}
 
 	return runningModels, nil
+}
+
+// ListModelParameters lists the parameters of each model on each host.
+func ListModelParameters() {
+	config, err := loadConfig()
+	if err != nil {
+		fmt.Printf("Error reading %s: %v\n", configFile, err)
+		return
+	}
+
+	hosts := createHosts(config)
+	nodeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
+
+	for _, host := range hosts {
+		fmt.Println(nodeStyle.Render(fmt.Sprintf("%s:", host.GetName())))
+		if host.GetType() != "ollama" {
+			fmt.Printf("Listing model parameters is not supported for %s (%s)\n", host.GetName(), host.GetType())
+			continue
+		}
+
+		params, err := host.GetModelParameters()
+		if err != nil {
+			fmt.Printf("Error getting model parameters from %s: %v\n", host.GetName(), err)
+			continue
+		}
+
+		for _, p := range params {
+			// Follow the 'list models' structure: model header, then details indented.
+			fmt.Printf("  >>> %s\n", p.Model)
+
+			// Extract only the settings of interest from the parameters text.
+			settings := extractSettings(p.Parameters)
+
+			fmt.Println("----------------------------------------------------------------")
+			pp.Println(params)
+			fmt.Println("********************")
+			pp.Println(settings)
+			fmt.Println("----------------------------------------------------------------")
+			fmt.Printf("      temperature: %s\n", settings["temperature"])
+			fmt.Printf("      top_p: %s\n", settings["top_p"])
+			fmt.Printf("      top_k: %s\n", settings["top_k"])
+			fmt.Printf("      repeat_penalty: %s\n", settings["repeat_penalty"])
+			fmt.Printf("      min_p: %s\n", settings["min_p"])
+		}
+		fmt.Println()
+	}
+}
+
+// GetModelParameters retrieves the parameters for each model on the host.
+func (h *OllamaHost) GetModelParameters() ([]ModelParameters, error) {
+	// Query tags directly to avoid relying on styled output from ListModels().
+	url := fmt.Sprintf("%s/api/tags", h.URL)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("could not list models: Ollama is not accessible on %s", h.Name)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body from %s: %v", h.Name, err)
+	}
+
+	var tagsResp struct {
+		Models []struct {
+			Name string `json:"name"`
+		} `json:"models"`
+	}
+	if err := json.Unmarshal(body, &tagsResp); err != nil {
+		return nil, fmt.Errorf("error parsing models from %s: %v", h.Name, err)
+	}
+
+	var allParams []ModelParameters
+	for _, m := range tagsResp.Models {
+		params, err := h.getModelParametersFromAPI(m.Name)
+		if err != nil {
+			return nil, fmt.Errorf("error getting parameters for model %s from %s: %v", m.Name, h.Name, err)
+		}
+		allParams = append(allParams, params)
+	}
+
+	return allParams, nil
+}
+
+// getModelParametersFromAPI retrieves the parameters for a single model from the API.
+func (h *OllamaHost) getModelParametersFromAPI(model string) (ModelParameters, error) {
+	url := fmt.Sprintf("%s/api/show", h.URL)
+	payload := map[string]string{"name": model}
+	body, _ := json.Marshal(payload)
+
+	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	if err != nil {
+		return ModelParameters{}, fmt.Errorf("error getting model parameters for %s on %s: %v", model, h.Name, err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ModelParameters{}, fmt.Errorf("error reading response body from %s: %v", h.Name, err)
+	}
+
+	var params ModelParameters
+	if err := json.Unmarshal(respBody, &params); err != nil {
+		return ModelParameters{}, fmt.Errorf("error parsing model parameters from %s: %v", h.Name, err)
+	}
+
+	params.Model = model
+
+	return params, nil
+}
+
+// extractSettings parses the modelfile parameters text and extracts a
+// small set of sampling settings of interest. It supports formats like:
+//
+//	"temperature 0.8"
+//	"parameter temperature 0.8"
+//	"repeat_penalty=1.1"
+func extractSettings(paramsText string) map[string]string {
+	wanted := map[string]string{
+		"temperature":    "n/a",
+		"top_p":          "n/a",
+		"top_k":          "n/a",
+		"repeat_penalty": "n/a",
+		"min_p":          "n/a",
+	}
+
+	lines := strings.Split(paramsText, "\n")
+	for _, line := range lines {
+		s := strings.TrimSpace(strings.ToLower(line))
+		if s == "" {
+			continue
+		}
+
+		// key=value form
+		if strings.Contains(s, "=") {
+			kv := strings.SplitN(s, "=", 2)
+			key := strings.TrimSpace(kv[0])
+			val := strings.TrimSpace(kv[1])
+			if _, ok := wanted[key]; ok && wanted[key] == "n/a" && val != "" {
+				wanted[key] = val
+			}
+			continue
+		}
+
+		// space-delimited forms
+		fields := strings.Fields(s)
+		if len(fields) >= 2 {
+			key := fields[0]
+			valIdx := 1
+			if key == "parameter" && len(fields) >= 3 {
+				key = fields[1]
+				valIdx = 2
+			}
+			if _, ok := wanted[key]; ok && wanted[key] == "n/a" {
+				wanted[key] = fields[valIdx]
+			}
+		}
+	}
+
+	return wanted
 }
