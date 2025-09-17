@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/k0kubun/pp"
 )
 
 // multimodelViewState represents the current state of the multimodel application's view.
@@ -225,6 +227,11 @@ func streamToColumn(p *tea.Program, hostIndex int, host Host, modelName string, 
 		"stream":   true,
 	}
 	body, _ := json.Marshal(payload)
+
+	pp.Println("payload", payload)
+	pp.Println("host", host)
+	os.Exit(1)
+
 	req, err := http.NewRequestWithContext(context.Background(), "POST", host.URL+"/api/chat", bytes.NewReader(body))
 	if err != nil {
 		return err

@@ -20,6 +20,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/k0kubun/pp"
 	"github.com/mwiater/gollamacli/models"
 )
 
@@ -34,7 +35,8 @@ type Host struct {
 	// Models lists the model identifiers that are available or desired on the host.
 	Models []string `json:"models"`
 	// SystemPrompt sets a custom system prompt for all requests; when empty, the model's default is used.
-	SystemPrompt string `json:"systemprompt"`
+	SystemPrompt string     `json:"systemprompt"`
+	Parameters   Parameters `json:"parameters"`
 }
 
 // Config contains application settings that drive the CLI/TUI behavior.
@@ -46,6 +48,21 @@ type Config struct {
 	Debug bool `json:"debug"`
 	// Multimodel toggles the four-column chat interface for multiple models.
 	Multimodel bool `json:"multimodel"`
+}
+
+// Parameters defines generation settings for a host.
+// All fields are optional; zero values imply unset.
+type Parameters struct {
+	TopK             int     `json:"top_k,omitempty"`
+	TopP             float64 `json:"top_p,omitempty"`
+	MinP             float64 `json:"min_p,omitempty"`
+	TFSZ             float64 `json:"tfs_z,omitempty"`
+	TypicalP         float64 `json:"typical_p,omitempty"`
+	RepeatLastN      int     `json:"repeat_last_n,omitempty"`
+	Temperature      float64 `json:"temperature,omitempty"`
+	RepeatPenalty    float64 `json:"repeat_penalty,omitempty"`
+	PresencePenalty  float64 `json:"presence_penalty,omitempty"`
+	FrequencyPenalty float64 `json:"frequency_penalty,omitempty"`
 }
 
 // loadConfig reads and parses the configuration file from the given path.
@@ -755,6 +772,9 @@ func StartGUI() {
 		log.Fatalf("Failed to start: %v", err)
 	}
 
+	pp.Println("cfg", cfg)
+	os.Exit(1)
+
 	if cfg.Multimodel {
 		models.UnloadModels()
 		if err := StartMultimodelGUI(cfg); err != nil {
@@ -764,6 +784,7 @@ func StartGUI() {
 	}
 
 	m := initialModel(cfg)
+
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	m.program = p
 
