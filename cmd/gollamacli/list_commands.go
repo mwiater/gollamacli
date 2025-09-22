@@ -37,6 +37,9 @@ func listAllCommands(rootCmd *cobra.Command) {
 
 	fmt.Println("Commands and Subcommands:")
 	for _, data := range commandData {
+		if strings.Contains(data.path, "completion") {
+			continue
+		}
 		fmt.Printf("  %s%s%s\n", data.path, strings.Repeat(" ", maxPathLength-len(data.path)+2), data.description)
 	}
 }
@@ -60,6 +63,7 @@ func collectCommandData(cmd *cobra.Command, currentPath string, indent string) [
 		path:        indent + fullPath,
 		description: cmd.Short,
 	}
+
 	allData = append(allData, data)
 
 	for _, subCmd := range cmd.Commands() {

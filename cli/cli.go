@@ -20,7 +20,6 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/k0kubun/pp"
 	"github.com/mwiater/gollamacli/models"
 )
 
@@ -53,16 +52,16 @@ type Config struct {
 // Parameters defines generation settings for a host.
 // All fields are optional; zero values imply unset.
 type Parameters struct {
-	TopK             int     `json:"top_k,omitempty"`
-	TopP             float64 `json:"top_p,omitempty"`
-	MinP             float64 `json:"min_p,omitempty"`
-	TFSZ             float64 `json:"tfs_z,omitempty"`
-	TypicalP         float64 `json:"typical_p,omitempty"`
-	RepeatLastN      int     `json:"repeat_last_n,omitempty"`
-	Temperature      float64 `json:"temperature,omitempty"`
-	RepeatPenalty    float64 `json:"repeat_penalty,omitempty"`
-	PresencePenalty  float64 `json:"presence_penalty,omitempty"`
-	FrequencyPenalty float64 `json:"frequency_penalty,omitempty"`
+	TopK             *int     `json:"top_k,omitempty"`
+	TopP             *float64 `json:"top_p,omitempty"`
+	MinP             *float64 `json:"min_p,omitempty"`
+	TFSZ             *float64 `json:"tfs_z,omitempty"`
+	TypicalP         *float64 `json:"typical_p,omitempty"`
+	RepeatLastN      *int     `json:"repeat_last_n,omitempty"`
+	Temperature      *float64 `json:"temperature,omitempty"`
+	RepeatPenalty    *float64 `json:"repeat_penalty,omitempty"`
+	PresencePenalty  *float64 `json:"presence_penalty,omitempty"`
+	FrequencyPenalty *float64 `json:"frequency_penalty,omitempty"`
 }
 
 // loadConfig reads and parses the configuration file from the given path.
@@ -73,10 +72,12 @@ func loadConfig(path string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not read config file: %w", err)
 	}
+
 	var cfg Config
 	if err := json.Unmarshal(b, &cfg); err != nil {
 		return nil, fmt.Errorf("could not parse config JSON: %w", err)
 	}
+
 	if len(cfg.Hosts) == 0 {
 		return nil, errors.New("config must contain at least one host")
 	}
@@ -426,18 +427,22 @@ func loadModelCmd(host Host, modelName string, client *http.Client) tea.Cmd {
 // responses chunk by chunk.
 // It sends streamChunkMsg for each new chunk and streamEndMsg when the stream completes.
 // Errors during streaming result in a streamErr message.
-func streamChatCmd(p *tea.Program, host Host, modelName string, history []chatMessage, systemPrompt string, client *http.Client) tea.Cmd {
+func streamChatCmd(p *tea.Program, host Host, modelName string, history []chatMessage, systemPrompt string, parameters Parameters, client *http.Client) tea.Cmd {
 	return func() tea.Msg {
 		messages := history
 		if systemPrompt != "" {
 			messages = append([]chatMessage{{Role: "system", Content: systemPrompt}}, messages...)
 		}
+
 		payload := map[string]any{
 			"model":    modelName,
 			"messages": messages,
+			"options":  parameters,
 			"stream":   true,
 		}
+
 		body, _ := json.Marshal(payload)
+
 		req, err := http.NewRequestWithContext(context.Background(), "POST", host.URL+"/api/chat", bytes.NewReader(body))
 		if err != nil {
 			return streamErr(err)
@@ -629,7 +634,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textArea.Reset()
 				m.isLoading = true
 				m.err = nil
-				cmds = append(cmds, m.spinner.Tick, streamChatCmd(m.program, m.selectedHost, m.selectedModel, m.chatHistory, m.selectedHost.SystemPrompt, m.client))
+
+				cmds = append(cmds, m.spinner.Tick, streamChatCmd(m.program, m.selectedHost, m.selectedModel, m.chatHistory, m.selectedHost.SystemPrompt, m.selectedHost.Parameters, m.client))
 			}
 		}
 	}
@@ -771,9 +777,6 @@ func StartGUI() {
 	if err != nil {
 		log.Fatalf("Failed to start: %v", err)
 	}
-
-	pp.Println("cfg", cfg)
-	os.Exit(1)
 
 	if cfg.Multimodel {
 		models.UnloadModels()
