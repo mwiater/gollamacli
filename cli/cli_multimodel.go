@@ -294,7 +294,7 @@ func (m *multimodelModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c", "esc":
 			return m, tea.Quit
 		case "tab":
 			if m.state == multimodelViewChat {
@@ -574,7 +574,7 @@ func (m *multimodelModel) assignmentView() string {
 	builder.WriteString("\n")
 
 	helpStyle := lipgloss.NewStyle().Faint(true)
-	builder.WriteString(helpStyle.Render("↑/↓: Navigate  Enter: Select Model  C: Start Chat  Q: Quit\n"))
+	builder.WriteString(helpStyle.Render("↑/↓: Navigate  Enter: Select Model  C: Start Chat  ESC: Quit\n"))
 
 	hasAssignment := false
 	for _, assignment := range m.assignments {
