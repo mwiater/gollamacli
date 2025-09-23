@@ -663,7 +663,7 @@ func (m *multimodelModel) multimodelChatView() string {
 				for _, msg := range m.columnResponses[i].chatHistory {
 					var role, content string
 					if msg.Role == "assistant" {
-						role = assistantStyle.Render("Assistant!: ")
+						role = assistantStyle.Render("Assistant: ")
 						content = msg.Content
 					} else {
 						role = userStyle.Render("You: ")

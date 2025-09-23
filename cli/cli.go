@@ -23,6 +23,17 @@ import (
 	"github.com/mwiater/gollamacli/models"
 )
 
+// Config contains application settings that drive the CLI/TUI behavior.
+// It includes the set of available hosts, debug mode, and multimodel mode.
+type Config struct {
+	// Hosts is the list of language model backends the application can target.
+	Hosts []Host `json:"hosts"`
+	// Debug enables display of timing metrics and logs additional details.
+	Debug bool `json:"debug"`
+	// Multimodel toggles the four-column chat interface for multiple models.
+	Multimodel bool `json:"multimodel"`
+}
+
 // Host describes a language model host and its configured models.
 // It is used by the TUI to display selectable hosts and by the
 // network layer to build API requests.
@@ -36,17 +47,6 @@ type Host struct {
 	// SystemPrompt sets a custom system prompt for all requests; when empty, the model's default is used.
 	SystemPrompt string     `json:"systemprompt"`
 	Parameters   Parameters `json:"parameters"`
-}
-
-// Config contains application settings that drive the CLI/TUI behavior.
-// It includes the set of available hosts, debug mode, and multimodel mode.
-type Config struct {
-	// Hosts is the list of language model backends the application can target.
-	Hosts []Host `json:"hosts"`
-	// Debug enables display of timing metrics and logs additional details.
-	Debug bool `json:"debug"`
-	// Multimodel toggles the four-column chat interface for multiple models.
-	Multimodel bool `json:"multimodel"`
 }
 
 // Parameters defines generation settings for a host.

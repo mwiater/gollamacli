@@ -14,8 +14,19 @@
         "dolphin-phi:2.7b",
         "qwen3:1.7b"
       ],
-      "systemprompt": ""
-    },
+      "systemprompt": "You are a helpful and concise assistant. Answer questions directly, and be brief and precise. Get straight to the point.",
+      "parameters": {
+        "top_k": 40,
+        "top_p": 0.9,
+        "min_p": 0.05,
+        "tfs_z": 1.0,
+        "typical_p": 0.95,
+        "repeat_last_n": 64,
+        "temperature": 0.7,
+        "repeat_penalty": 1.1,
+        "presence_penalty": 0.6,
+        "frequency_penalty": 0.3
+      }
     {
       "name": "Ollama02",
       "url": "http://192.168.0.11:11434",
@@ -25,7 +36,19 @@
         "granite3.3:2b",
         "gemma3n:e2b"
       ],
-      "systemprompt": ""
+      "systemprompt": "You are a helpful and concise assistant. Answer questions directly, and be brief and precise. Get straight to the point.",
+      "parameters": {
+        "top_k": 40,
+        "top_p": 0.9,
+        "min_p": 0.05,
+        "tfs_z": 1.0,
+        "typical_p": 0.95,
+        "repeat_last_n": 64,
+        "temperature": 0.7,
+        "repeat_penalty": 1.1,
+        "presence_penalty": 0.6,
+        "frequency_penalty": 0.3
+      }
     }
   ],
   "debug": true,
