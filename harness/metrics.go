@@ -1,5 +1,4 @@
 // harness/metrics.go
-// Package: harness
 package harness
 
 import (

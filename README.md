@@ -128,7 +128,7 @@ The following commands are available for managing models:
 
 ### Keyboard Shortcuts (Chat)
 
-- `q` or `Ctrl+c`: Quit the application.
+- `esc` or `Ctrl+c`: Quit the application.
 - `Tab`: Return to the host/model selection screen from the chat view.
 
 ## Build Instructions

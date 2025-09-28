@@ -4,30 +4,30 @@ package harness
 
 import "time"
 
-// ModelConfig defines how to call a specific model via Ollama.
-type ModelConfig struct {
+// HarnessModelConfig defines how to call a specific model via Ollama.
+type HarnessModelConfig struct {
 	Name        string         `json:"name"`         // e.g. "granite3.3:2b"
 	DisplayName string         `json:"display_name"` // optional pretty name
 	Options     map[string]any `json:"options"`      // Ollama /api/generate "options" (temperature, top_p, top_k, num_predict, stop, etc.)
 }
 
-// PromptScenario is one canonical test prompt with a human label.
-type PromptScenario struct {
+// HarnessPromptScenario is one canonical test prompt with a human label.
+type HarnessPromptScenario struct {
 	ID          string `json:"id"`          // e.g. "short", "medium", "long"
 	Description string `json:"description"` // human-friendly
 	Prompt      string `json:"prompt"`      // full prompt text
 }
 
-// SuiteConfig configures the entire run.
-type SuiteConfig struct {
+// HarnessSuiteConfig configures the entire run.
+type HarnessSuiteConfig struct {
 	// Ollama endpoint like "http://localhost:11434"
 	BaseURL string `json:"base_url"`
 
 	// Models to benchmark.
-	Models []ModelConfig `json:"models"`
+	Models []HarnessModelConfig `json:"models"`
 
 	// Scenarios (short/medium/long, etc).
-	Scenarios []PromptScenario `json:"scenarios"`
+	Scenarios []HarnessPromptScenario `json:"scenarios"`
 
 	// Per-scenario number of trials to run per model (warm runs).
 	Trials int `json:"trials"`
@@ -43,8 +43,8 @@ type SuiteConfig struct {
 	RequestTimeout time.Duration `json:"request_timeout"`
 }
 
-// TrialResult captures metrics for a single streamed generation trial.
-type TrialResult struct {
+// TrialHarnessTrialResultResult captures metrics for a single streamed generation trial.
+type HarnessTrialResult struct {
 	ModelName      string `json:"model_name"`
 	ScenarioID     string `json:"scenario_id"`
 	Cold           bool   `json:"cold"` // true if this was the initial cold run
@@ -71,8 +71,8 @@ type TrialResult struct {
 	DoneReason string `json:"done_reason,omitempty"`
 }
 
-// ModelSummary aggregates per-model stats for reporting.
-type ModelSummary struct {
+// HarnessModelSummary aggregates per-model stats for reporting.
+type HarnessModelSummary struct {
 	ModelName string `json:"model_name"`
 
 	// p50/p95 for TTFT and Total latency across all warm trials
@@ -86,10 +86,10 @@ type ModelSummary struct {
 	GenTPSStd  float64 `json:"gen_tps_std"`
 }
 
-// SuiteResult is the top-level artifact returned by RunSpeedSuite.
-type SuiteResult struct {
-	Config       SuiteConfig    `json:"config"`
-	Trials       []TrialResult  `json:"trials"`
-	ModelReports []ModelSummary `json:"model_reports"`
-	GeneratedAt  time.Time      `json:"generated_at"`
+// HarnessSuiteResult is the top-level artifact returned by RunSpeedSuite.
+type HarnessSuiteResult struct {
+	Config       HarnessSuiteConfig    `json:"config"`
+	Trials       []HarnessTrialResult  `json:"trials"`
+	ModelReports []HarnessModelSummary `json:"model_reports"`
+	GeneratedAt  time.Time             `json:"generated_at"`
 }

@@ -2,8 +2,9 @@
 package gollamacli
 
 import (
-	"github.com/mwiater/gollamacli/models"
 	"github.com/spf13/cobra"
+
+	"github.com/mwiater/gollamacli/models"
 )
 
 // syncModelsCmd implements 'sync models', which deletes models not in the

@@ -12,15 +12,15 @@ import (
 
 // RunSpeedSuite is the single exported entrypoint.
 // Provide a fully-populated SuiteConfig, and it returns detailed results.
-func RunSpeedSuite(ctx context.Context, cfg SuiteConfig) (SuiteResult, error) {
+func RunSpeedSuite(ctx context.Context, cfg HarnessSuiteConfig) (HarnessSuiteResult, error) {
 	if cfg.BaseURL == "" {
-		return SuiteResult{}, errors.New("BaseURL is required (e.g., http://localhost:11434)")
+		return HarnessSuiteResult{}, errors.New("BaseURL is required (e.g., http://localhost:11434)")
 	}
 	if len(cfg.Models) == 0 {
-		return SuiteResult{}, errors.New("at least one ModelConfig is required")
+		return HarnessSuiteResult{}, errors.New("at least one ModelConfig is required")
 	}
 	if len(cfg.Scenarios) == 0 {
-		return SuiteResult{}, errors.New("at least one PromptScenario is required")
+		return HarnessSuiteResult{}, errors.New("at least one PromptScenario is required")
 	}
 	if cfg.Trials <= 0 {
 		cfg.Trials = 5
@@ -30,10 +30,11 @@ func RunSpeedSuite(ctx context.Context, cfg SuiteConfig) (SuiteResult, error) {
 	}
 
 	client := newHTTPClient(cfg.RequestTimeout)
-	var all []TrialResult
+	var all []HarnessTrialResult
 
 	for _, model := range cfg.Models {
 		// Optional warm-up (not recorded)
+		fmt.Println("Warming up:", model)
 		if cfg.Warmup {
 			_ = doWarmup(ctx, client, cfg.BaseURL, model, cfg.Scenarios[0])
 		}
@@ -50,10 +51,11 @@ func RunSpeedSuite(ctx context.Context, cfg SuiteConfig) (SuiteResult, error) {
 		// Warm trials across all scenarios
 		for _, sc := range cfg.Scenarios {
 			for i := 0; i < cfg.Trials; i++ {
+				fmt.Println("GenerateAndMeasure:", sc)
 				tr, err := GenerateAndMeasure(ctx, client, cfg.BaseURL, model, sc, false)
 				if err != nil {
 					// Record a synthetic failed row to make issues visible without aborting.
-					all = append(all, TrialResult{
+					all = append(all, HarnessTrialResult{
 						ModelName:      model.Name,
 						ScenarioID:     sc.ID,
 						Cold:           false,
@@ -69,10 +71,10 @@ func RunSpeedSuite(ctx context.Context, cfg SuiteConfig) (SuiteResult, error) {
 		}
 	}
 
-	return buildSuiteResult(cfg, all), nil
+	return buildHarnessSuiteResult(cfg, all), nil
 }
 
-func doWarmup(ctx context.Context, c *http.Client, base string, model ModelConfig, scenario PromptScenario) error {
+func doWarmup(ctx context.Context, c *http.Client, base string, model HarnessModelConfig, scenario HarnessPromptScenario) error {
 	ctx2, cancel := context.WithTimeout(ctx, 45*time.Second)
 	defer cancel()
 	_, err := GenerateAndMeasure(ctx2, c, base, model, scenario, false)

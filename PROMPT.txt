@@ -1,9 +1,0 @@
-I have created a new file: cmd/gollamacli/list_modelparameters.go
-
-It will be called by the command: list list_modelparameters
-
-In the models/models.go I need you to add a set of functions to support this command.
-
-It will iterate through each model on each host and call POST api/show for each model to get the current parameters.
-
-You will need to create a new struct to hold this information and then print each models parameters to the console.

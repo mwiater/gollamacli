@@ -697,7 +697,7 @@ func (m *model) chatView() string {
 		headerStyle.Render(hostInfo),
 		headerStyle.MarginLeft(1).Render(modelInfo),
 	)
-	help := lipgloss.NewStyle().Faint(true).Render(" (tab to change, q to quit)")
+	help := lipgloss.NewStyle().Faint(true).Render(" (tab to change, esc to quit)")
 	builder.WriteString(status + help + "\n\n")
 
 	var historyBuilder strings.Builder

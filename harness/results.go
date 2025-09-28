@@ -5,13 +5,13 @@ package harness
 import "time"
 
 // summarize builds per-model summaries from TrialResult rows (warm runs only unless cold-only).
-func summarize(trials []TrialResult) []ModelSummary {
-	byModel := map[string][]TrialResult{}
+func summarize(trials []HarnessTrialResult) []HarnessModelSummary {
+	byModel := map[string][]HarnessTrialResult{}
 	for _, t := range trials {
 		byModel[t.ModelName] = append(byModel[t.ModelName], t)
 	}
 
-	out := make([]ModelSummary, 0, len(byModel))
+	out := make([]HarnessModelSummary, 0, len(byModel))
 	for m, rows := range byModel {
 		var ttftVals []float64
 		var totalVals []float64
@@ -26,7 +26,7 @@ func summarize(trials []TrialResult) []ModelSummary {
 			}
 		}
 
-		ms := ModelSummary{
+		ms := HarnessModelSummary{
 			ModelName:  m,
 			TTFTP50:    simpleQuantile(ttftVals, 0.50),
 			TTFTP95:    simpleQuantile(ttftVals, 0.95),
@@ -43,9 +43,9 @@ func summarize(trials []TrialResult) []ModelSummary {
 	return out
 }
 
-// buildSuiteResult packs everything with a timestamp.
-func buildSuiteResult(cfg SuiteConfig, trials []TrialResult) SuiteResult {
-	return SuiteResult{
+// buildHarnessSuiteResult packs everything with a timestamp.
+func buildHarnessSuiteResult(cfg HarnessSuiteConfig, trials []HarnessTrialResult) HarnessSuiteResult {
+	return HarnessSuiteResult{
 		Config:       cfg,
 		Trials:       trials,
 		ModelReports: summarize(trials),

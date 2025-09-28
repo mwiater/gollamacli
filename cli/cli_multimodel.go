@@ -574,7 +574,7 @@ func (m *multimodelModel) assignmentView() string {
 	builder.WriteString("\n")
 
 	helpStyle := lipgloss.NewStyle().Faint(true)
-	builder.WriteString(helpStyle.Render("↑/↓: Navigate  Enter: Select Model  C: Start Chat  ESC: Quit\n"))
+	builder.WriteString(helpStyle.Render("↑/↓: Navigate  Enter: Select Model  C: Start Chat  esc: Quit\n"))
 
 	hasAssignment := false
 	for _, assignment := range m.assignments {

@@ -43,10 +43,10 @@ func GenerateAndMeasure(
 	ctx context.Context,
 	httpClient *http.Client,
 	baseURL string,
-	model ModelConfig,
-	scenario PromptScenario,
+	model HarnessModelConfig,
+	scenario HarnessPromptScenario,
 	isCold bool,
-) (TrialResult, error) {
+) (HarnessTrialResult, error) {
 	reqPayload := ollamaRequest{
 		Model:   model.Name,
 		Prompt:  scenario.Prompt,
@@ -57,7 +57,7 @@ func GenerateAndMeasure(
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/api/generate", bytes.NewReader(body))
 	if err != nil {
-		return TrialResult{}, err
+		return HarnessTrialResult{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
@@ -65,13 +65,13 @@ func GenerateAndMeasure(
 	t0 := time.Now()
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return TrialResult{}, err
+		return HarnessTrialResult{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
-		return TrialResult{}, fmt.Errorf("ollama error: status=%d body=%s", resp.StatusCode, string(b))
+		return HarnessTrialResult{}, fmt.Errorf("ollama error: status=%d body=%s", resp.StatusCode, string(b))
 	}
 
 	var (
@@ -101,7 +101,7 @@ func GenerateAndMeasure(
 			if readErr == io.EOF {
 				break
 			}
-			return TrialResult{}, readErr
+			return HarnessTrialResult{}, readErr
 		}
 	}
 
@@ -127,7 +127,7 @@ func GenerateAndMeasure(
 		}
 	}
 
-	tr := TrialResult{
+	tr := HarnessTrialResult{
 		ModelName:      model.Name,
 		ScenarioID:     scenario.ID,
 		Cold:           isCold,
