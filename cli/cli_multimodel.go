@@ -203,7 +203,7 @@ func multimodelStreamChatCmd(p *tea.Program, m *multimodelModel) tea.Cmd {
 		for i, assignment := range m.assignments {
 			if assignment.isAssigned {
 				go func(hostIndex int, host Host, model string, history []chatMessage) {
-					if err := streamToColumn(p, hostIndex, host, model, history, host.SystemPrompt, host.Parameters, m.client); err != nil {
+					if err := streamToColumn(p, hostIndex, host, model, history, host.SystemPrompt, m.config.JSON, host.Parameters, m.client); err != nil {
 						p.Send(multimodelStreamErr{hostIndex: hostIndex, err: err})
 					}
 				}(i, assignment.host, assignment.selectedModel, m.columnResponses[i].chatHistory)
@@ -214,17 +214,29 @@ func multimodelStreamChatCmd(p *tea.Program, m *multimodelModel) tea.Cmd {
 }
 
 // streamToColumn streams chat responses for a single assigned column.
-func streamToColumn(p *tea.Program, hostIndex int, host Host, modelName string, history []chatMessage, systemPrompt string, parameters Parameters, client *http.Client) error {
+func streamToColumn(p *tea.Program, hostIndex int, host Host, modelName string, history []chatMessage, systemPrompt string, JSONFormat bool, parameters Parameters, client *http.Client) error {
 	messages := history
 	if systemPrompt != "" {
 		messages = append([]chatMessage{{Role: "system", Content: systemPrompt}}, messages...)
 	}
+
 	payload := map[string]any{
 		"model":    modelName,
 		"messages": messages,
 		"options":  parameters,
 		"stream":   true,
 	}
+
+	if JSONFormat {
+		payload = map[string]any{
+			"model":    modelName,
+			"messages": messages,
+			"options":  parameters,
+			"stream":   true,
+			"format":   "json",
+		}
+	}
+
 	body, _ := json.Marshal(payload)
 
 	req, err := http.NewRequestWithContext(context.Background(), "POST", host.URL+"/api/chat", bytes.NewReader(body))
