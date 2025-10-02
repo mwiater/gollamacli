@@ -705,12 +705,109 @@ func (m *model) chatView() string {
 	headerStyle := lipgloss.NewStyle().Background(lipgloss.Color("62")).Foreground(lipgloss.Color("230")).Padding(0, 1)
 	hostInfo := fmt.Sprintf("Host: %s", m.selectedHost.Name)
 	modelInfo := fmt.Sprintf("Model: %s", m.selectedModel)
+
+	// --- modelTopK (Example from your previous prompt) ---
+	var modelTopK string
+	if m.selectedHost.Parameters.TopK != nil {
+		modelTopK = fmt.Sprintf("TopK: %v", *m.selectedHost.Parameters.TopK)
+	} else {
+		modelTopK = "TopK: n/a"
+	}
+
+	// --- modelTopP ---
+	var modelTopP string
+	if m.selectedHost.Parameters.TopP != nil {
+		modelTopP = fmt.Sprintf("TopP: %v", *m.selectedHost.Parameters.TopP)
+	} else {
+		modelTopP = "TopP: n/a"
+	}
+
+	// --- modelMinP ---
+	var modelMinP string
+	if m.selectedHost.Parameters.MinP != nil {
+		modelMinP = fmt.Sprintf("MinP: %v", *m.selectedHost.Parameters.MinP)
+	} else {
+		modelMinP = "MinP: n/a"
+	}
+
+	// --- modelTFSZ ---
+	var modelTFSZ string
+	if m.selectedHost.Parameters.TFSZ != nil {
+		modelTFSZ = fmt.Sprintf("TFSZ: %v", *m.selectedHost.Parameters.TFSZ)
+	} else {
+		modelTFSZ = "TFSZ: n/a"
+	}
+
+	// --- modelTypicalP ---
+	var modelTypicalP string
+	if m.selectedHost.Parameters.TypicalP != nil {
+		modelTypicalP = fmt.Sprintf("TypicalP: %v", *m.selectedHost.Parameters.TypicalP)
+	} else {
+		modelTypicalP = "TypicalP: n/a"
+	}
+
+	// --- modelRepeatLastN ---
+	var modelRepeatLastN string
+	if m.selectedHost.Parameters.RepeatLastN != nil {
+		modelRepeatLastN = fmt.Sprintf("RepeatLastN: %v", *m.selectedHost.Parameters.RepeatLastN)
+	} else {
+		modelRepeatLastN = "RepeatLastN: n/a"
+	}
+
+	// --- modelTemperature ---
+	var modelTemperature string
+	if m.selectedHost.Parameters.Temperature != nil {
+		modelTemperature = fmt.Sprintf("Temperature: %v", *m.selectedHost.Parameters.Temperature)
+	} else {
+		modelTemperature = "Temperature: n/a"
+	}
+
+	// --- modelRepeatPenalty ---
+	var modelRepeatPenalty string
+	if m.selectedHost.Parameters.RepeatPenalty != nil {
+		modelRepeatPenalty = fmt.Sprintf("RepeatPenalty: %v", *m.selectedHost.Parameters.RepeatPenalty)
+	} else {
+		modelRepeatPenalty = "RepeatPenalty: n/a"
+	}
+
+	// --- modelPresencePenalty ---
+	var modelPresencePenalty string
+	if m.selectedHost.Parameters.PresencePenalty != nil {
+		modelPresencePenalty = fmt.Sprintf("PresencePenalty: %v", *m.selectedHost.Parameters.PresencePenalty)
+	} else {
+		modelPresencePenalty = "PresencePenalty: n/a"
+	}
+
+	// --- modelFrequencyPenalty ---
+	var modelFrequencyPenalty string
+	if m.selectedHost.Parameters.FrequencyPenalty != nil {
+		modelFrequencyPenalty = fmt.Sprintf("FrequencyPenalty: %v", *m.selectedHost.Parameters.FrequencyPenalty)
+	} else {
+		modelFrequencyPenalty = "FrequencyPenalty: n/a"
+	}
+
 	status := lipgloss.JoinHorizontal(lipgloss.Top,
 		headerStyle.Render(hostInfo),
 		headerStyle.MarginLeft(1).Render(modelInfo),
 	)
+
+	paramStyle := lipgloss.NewStyle().Background(lipgloss.Color("40")).Foreground(lipgloss.Color("230")).Padding(0, 1)
+
+	modelParams := lipgloss.JoinHorizontal(lipgloss.Top,
+		paramStyle.MarginTop(1).Render(modelTopK),
+		paramStyle.MarginLeft(1).MarginTop(1).Render(modelTopP),
+		paramStyle.MarginLeft(1).MarginTop(1).Render(modelMinP),
+		paramStyle.MarginLeft(1).MarginTop(1).Render(modelTFSZ),
+		paramStyle.MarginLeft(1).MarginTop(1).Render(modelTypicalP),
+		paramStyle.MarginLeft(1).MarginTop(1).Render(modelRepeatLastN),
+		paramStyle.MarginLeft(1).MarginTop(1).Render(modelTemperature),
+		paramStyle.MarginLeft(1).MarginTop(1).Render(modelRepeatPenalty),
+		paramStyle.MarginLeft(1).MarginTop(1).Render(modelPresencePenalty),
+		paramStyle.MarginLeft(1).MarginTop(1).Render(modelFrequencyPenalty),
+	)
+
 	help := lipgloss.NewStyle().Faint(true).Render(" (tab to change, esc to quit)")
-	builder.WriteString(status + help + "\n\n")
+	builder.WriteString(status + help + "\n" + modelParams + "\n\n")
 
 	var historyBuilder strings.Builder
 	userStyle := lipgloss.NewStyle().Bold(true)
