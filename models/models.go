@@ -61,6 +61,7 @@ type LLMHost interface {
 	PullModel(model string)
 	DeleteModel(model string)
 	ListModels() ([]string, error)
+	ListRawModels() ([]string, error)
 	UnloadModel(model string)
 	GetName() string
 	GetType() string
@@ -187,7 +188,7 @@ func DeleteModels() {
 // deleteModelsOnNode deletes models on a single host that are not present in modelsToKeep.
 func deleteModelsOnNode(host LLMHost, modelsToKeep []string) {
 	fmt.Printf("Starting model cleanup for %s...\n", host.GetName())
-	models, err := host.ListModels()
+	models, err := host.ListRawModels()
 	if err != nil {
 		fmt.Printf("Error getting models from %s: %v\n", host.GetName(), err)
 		return
@@ -198,14 +199,13 @@ func deleteModelsOnNode(host LLMHost, modelsToKeep []string) {
 		modelsToKeepSet[m] = struct{}{}
 	}
 
-	for _, installedModel := range models {
-		parts := strings.Split(installedModel, " ")
-		modelName := parts[1]
+	for _, installedModelName := range models {
+		modelName := installedModelName
 		if _, keep := modelsToKeepSet[modelName]; !keep {
-			fmt.Printf("  -> Deleting model: %s on %s\n", modelName, host.GetName())
+			fmt.Printf("  -> Deleting model: %s on %s\n", modelName, host.GetName())
 			host.DeleteModel(modelName)
 		} else {
-			fmt.Printf("  -> Keeping model: %s on %s\n", modelName, host.GetName())
+			fmt.Printf("  -> Keeping model: %s on %s\n", modelName, host.GetName())
 		}
 	}
 }
@@ -327,6 +327,36 @@ func ListModels() {
 		}
 		fmt.Println()
 	}
+}
+
+// OllamaHost.ListRawModels returns the models available on an Ollama host without styling.
+func (h *OllamaHost) ListRawModels() ([]string, error) {
+	url := fmt.Sprintf("%s/api/tags", h.URL)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("could not list models: Ollama is not accessible on %s", h.Name)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body from %s: %v", h.Name, err)
+	}
+
+	var tagsResp struct {
+		Models []struct {
+			Name string `json:"name"`
+		} `json:"models"`
+	}
+	if err := json.Unmarshal(body, &tagsResp); err != nil {
+		return nil, fmt.Errorf("error parsing models from %s: %v", h.Name, err)
+	}
+
+	var models []string
+	for _, model := range tagsResp.Models {
+		models = append(models, model.Name) // ONLY append the raw model name
+	}
+	return models, nil
 }
 
 // ListModels returns the models available on an Ollama host, labeling currently loaded models.
