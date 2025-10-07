@@ -706,6 +706,14 @@ func (m *model) chatView() string {
 	hostInfo := fmt.Sprintf("Host: %s", m.selectedHost.Name)
 	modelInfo := fmt.Sprintf("Model: %s", m.selectedModel)
 
+	// --- JSON Mode (Example from your previous prompt) ---
+	var JSONMode string
+	if m.config.JSON == false {
+		JSONMode = fmt.Sprintf("JSON Mode: %s", "false")
+	} else {
+		JSONMode = fmt.Sprintf("JSON Mode: %s", "true")
+	}
+
 	// --- modelTopK (Example from your previous prompt) ---
 	var modelTopK string
 	if m.selectedHost.Parameters.TopK != nil {
@@ -786,28 +794,66 @@ func (m *model) chatView() string {
 		modelFrequencyPenalty = "FrequencyPenalty: n/a"
 	}
 
+	var longestLength int
+
+	// Create a slice of the model parameter strings
+	modelStrings := []string{
+		modelTopK,
+		modelTopP,
+		modelMinP,
+		modelTFSZ,
+		modelTypicalP,
+		modelRepeatLastN,
+		modelTemperature,
+		modelRepeatPenalty,
+		modelPresencePenalty,
+		modelFrequencyPenalty,
+	}
+
+	// Iterate through the slice to find the maximum length
+	for _, s := range modelStrings {
+		length := len(s)
+		if length > longestLength {
+			longestLength = length
+		}
+	}
+
+	labelString := "Config:"
+	labelStyle := lipgloss.NewStyle().Background(lipgloss.Color("0")).Foreground(lipgloss.Color("255")).Padding(0, 1)
+	jsonModeStyle := lipgloss.NewStyle().Background(lipgloss.Color("255")).Foreground(lipgloss.Color("0")).Padding(0, 1).MarginLeft(1)
+	paramStyle := lipgloss.NewStyle().Background(lipgloss.Color("0")).Foreground(lipgloss.Color("40")).Padding(0, 1).MarginLeft(1).MarginTop(1).Width(longestLength + 2)
+
 	status := lipgloss.JoinHorizontal(lipgloss.Top,
+		labelStyle.Render("Config:"),
 		headerStyle.Render(hostInfo),
 		headerStyle.MarginLeft(1).Render(modelInfo),
+		jsonModeStyle.Render(JSONMode),
 	)
 
-	paramStyle := lipgloss.NewStyle().Background(lipgloss.Color("40")).Foreground(lipgloss.Color("230")).Padding(0, 1)
-
-	modelParams := lipgloss.JoinHorizontal(lipgloss.Top,
-		paramStyle.MarginTop(1).Render(modelTopK),
-		paramStyle.MarginLeft(1).MarginTop(1).Render(modelTopP),
-		paramStyle.MarginLeft(1).MarginTop(1).Render(modelMinP),
-		paramStyle.MarginLeft(1).MarginTop(1).Render(modelTFSZ),
-		paramStyle.MarginLeft(1).MarginTop(1).Render(modelTypicalP),
-		paramStyle.MarginLeft(1).MarginTop(1).Render(modelRepeatLastN),
-		paramStyle.MarginLeft(1).MarginTop(1).Render(modelTemperature),
-		paramStyle.MarginLeft(1).MarginTop(1).Render(modelRepeatPenalty),
-		paramStyle.MarginLeft(1).MarginTop(1).Render(modelPresencePenalty),
-		paramStyle.MarginLeft(1).MarginTop(1).Render(modelFrequencyPenalty),
+	configSettingsLine1 := lipgloss.JoinHorizontal(lipgloss.Top,
+		paramStyle.MarginLeft(len(labelString)+1).Render(modelTopK),
+		paramStyle.Render(modelTopP),
+		paramStyle.Render(modelMinP),
 	)
 
-	help := lipgloss.NewStyle().Faint(true).Render(" (tab to change, esc to quit)")
-	builder.WriteString(status + help + "\n" + modelParams + "\n\n")
+	configSettingsLine2 := lipgloss.JoinHorizontal(lipgloss.Top,
+		paramStyle.MarginLeft(len(labelString)+1).Render(modelTFSZ),
+		paramStyle.Render(modelTypicalP),
+		paramStyle.Render(modelRepeatLastN),
+	)
+
+	configSettingsLine3 := lipgloss.JoinHorizontal(lipgloss.Top,
+		paramStyle.MarginLeft(len(labelString)+1).Render(modelTemperature),
+		paramStyle.Render(modelRepeatPenalty),
+		paramStyle.Render(modelPresencePenalty),
+	)
+
+	configSettingsLine4 := lipgloss.JoinHorizontal(lipgloss.Top,
+		paramStyle.MarginLeft(len(labelString)+1).Render(modelFrequencyPenalty),
+	)
+
+	help := lipgloss.NewStyle().Render(" (tab to change, esc to quit)")
+	builder.WriteString(status + help + configSettingsLine1 + configSettingsLine2 + configSettingsLine3 + configSettingsLine4 + "\n\n")
 
 	var historyBuilder strings.Builder
 	userStyle := lipgloss.NewStyle().Bold(true)
