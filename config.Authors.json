@@ -1,0 +1,119 @@
+{
+  "hosts": [
+    {
+      "name": "Baseline",
+      "url": "https://o-udoo01.0nezer0.com",
+      "type": "ollama",
+      "models": [
+        "stablelm-zephyr:3b",
+        "granite4:micro",
+        "gemma3n:e2b",
+        "deepseek-r1:1.5b",
+        "llama3.2:1b",
+        "granite3.1-moe:1b",
+        "dolphin-phi:2.7b",
+        "qwen3:1.7b"
+      ],
+      "systemprompt": "You are a helpful and concise assistant. Answer questions directly, and be brief and precise. Get straight to the point.",
+      "parameters": {
+        "top_k": 40,
+        "top_p": 0.9,
+        "min_p": 0.05,
+        "tfs_z": 1.0,
+        "typical_p": 0.95,
+        "repeat_last_n": 64,
+        "temperature": 0.7,
+        "repeat_penalty": 1.1,
+        "presence_penalty": 0.6,
+        "frequency_penalty": 0.3
+      }
+    },
+    {
+      "name": "Hunter_S_Thompson",
+      "url": "https://o-udoo02.0nezer0.com",
+      "type": "ollama",
+      "models": [
+        "stablelm-zephyr:3b",
+        "granite4:micro",
+        "gemma3n:e2b",
+        "deepseek-r1:1.5b",
+        "llama3.2:1b",
+        "granite3.1-moe:1b",
+        "dolphin-phi:2.7b",
+        "qwen3:1.7b"
+      ],
+      "systemprompt": "You are Hunter S. Thompson. Emulate his Gonzo style: frantic, subjective, political, and paranoid. Use vivid, often drug-fueled, and exaggerated language. Swearing is permitted.",
+      "parameters": {
+        "top_k": 40,
+        "top_p": 0.9,
+        "min_p": 0.05,
+        "tfs_z": 1.0,
+        "typical_p": 0.95,
+        "repeat_last_n": 64,
+        "temperature": 0.7,
+        "repeat_penalty": 1.1,
+        "presence_penalty": 0.6,
+        "frequency_penalty": 0.3
+      }
+    },
+    {
+      "name": "Jane_Austen",
+      "url": "https://o-udoo03.0nezer0.com",
+      "type": "ollama",
+      "models": [
+        "stablelm-zephyr:3b",
+        "granite4:micro",
+        "gemma3n:e2b",
+        "deepseek-r1:1.5b",
+        "llama3.2:1b",
+        "granite3.1-moe:1b",
+        "dolphin-phi:2.7b",
+        "qwen3:1.7b"
+      ],
+      "systemprompt": "You are Jane Austen. Write in her formal, witty, and satirical style. Use complex syntax, third-person omniscient narration, and focus on social commentary and manners. Be prim and proper.",
+      "parameters": {
+        "top_k": 40,
+        "top_p": 0.9,
+        "min_p": 0.05,
+        "tfs_z": 1.0,
+        "typical_p": 0.95,
+        "repeat_last_n": 64,
+        "temperature": 0.7,
+        "repeat_penalty": 1.1,
+        "presence_penalty": 0.6,
+        "frequency_penalty": 0.3
+      }
+    },
+    {
+      "name": "Ernest_Hemingway",
+      "url": "https://o-udoo04.0nezer0.com",
+      "type": "ollama",
+      "models": [
+        "stablelm-zephyr:3b",
+        "granite4:micro",
+        "gemma3n:e2b",
+        "deepseek-r1:1.5b",
+        "llama3.2:1b",
+        "granite3.1-moe:1b",
+        "dolphin-phi:2.7b",
+        "qwen3:1.7b"
+      ],
+      "systemprompt": "You are Ernest Hemingway. Write using his terse, minimalist style. Use short, declarative sentences. Avoid adjectives and complex structures. Focus on action, dialogue, and plain, unadorned truth.",
+      "parameters": {
+        "top_k": 40,
+        "top_p": 0.9,
+        "min_p": 0.05,
+        "tfs_z": 1.0,
+        "typical_p": 0.95,
+        "repeat_last_n": 64,
+        "temperature": 0.7,
+        "repeat_penalty": 1.1,
+        "presence_penalty": 0.6,
+        "frequency_penalty": 0.3
+      }
+    }
+  ],
+  "debug": true,
+  "multimodel": true,
+  "json": false
+}

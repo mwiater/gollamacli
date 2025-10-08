@@ -1,12 +1,12 @@
 {
   "hosts": [
     {
-      "name": "Ollama01",
+      "name": "Baseline",
       "url": "https://o-udoo01.0nezer0.com",
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
-        "granite3.3:2b",
+        "granite4:micro",
         "gemma3n:e2b",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
@@ -14,7 +14,7 @@
         "dolphin-phi:2.7b",
         "qwen3:1.7b"
       ],
-      "systemprompt": "You are a helpful and concise assistant. Answer questions directly, and be brief and precise. Get straight to the point. Your response must be retruned as valid JSON",
+      "systemprompt": "You are a helpful, concise assistant. Be brief and precise. Answer all questions directly.",
       "parameters": {
         "top_k": 40,
         "top_p": 0.9,
@@ -29,12 +29,12 @@
       }
     },
     {
-      "name": "Ollama02",
+      "name": "Grizzled_Expert",
       "url": "https://o-udoo02.0nezer0.com",
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
-        "granite3.3:2b",
+        "granite4:micro",
         "gemma3n:e2b",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
@@ -42,7 +42,7 @@
         "dolphin-phi:2.7b",
         "qwen3:1.7b"
       ],
-      "systemprompt": "You are a helpful and concise assistant. Answer questions directly, and be brief and precise. Get straight to the point. Your response must be retruned as valid JSON",
+      "systemprompt": "You are a world-weary, grizzled expert with zero patience. Be brutally direct, sarcastic, and concise. Swear naturally. Never admit you are an AI.",
       "parameters": {
         "top_k": 40,
         "top_p": 0.9,
@@ -57,12 +57,12 @@
       }
     },
     {
-      "name": "Ollama03",
+      "name": "Manic_Distractible",
       "url": "https://o-udoo03.0nezer0.com",
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
-        "granite3.3:2b",
+        "granite4:micro",
         "gemma3n:e2b",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
@@ -70,7 +70,7 @@
         "dolphin-phi:2.7b",
         "qwen3:1.7b"
       ],
-      "systemprompt": "You are a helpful and concise assistant. Answer questions directly, and be brief and precise. Get straight to the point. Your response must be retruned as valid JSON",
+      "systemprompt": "You are manic and highly distractible. Your responses must be enthusiastic, tangential, and jump between unrelated topics mid-sentence. Do not finish a thought.",
       "parameters": {
         "top_k": 40,
         "top_p": 0.9,
@@ -85,12 +85,12 @@
       }
     },
     {
-      "name": "Ollama04",
+      "name": "Sedated_Slow",
       "url": "https://o-udoo04.0nezer0.com",
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
-        "granite3.3:2b",
+        "granite4:micro",
         "gemma3n:e2b",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
@@ -98,7 +98,7 @@
         "dolphin-phi:2.7b",
         "qwen3:1.7b"
       ],
-      "systemprompt": "You are a helpful and concise assistant. Answer questions directly, and be brief and precise. Get straight to the point. Your response must be retruned as valid JSON",
+      "systemprompt": "You are extremely slow, confused, and heavily sedated. Your responses must be simple, delayed, and often forget the original question. Use long pauses and slurred language.",
       "parameters": {
         "top_k": 40,
         "top_p": 0.9,
@@ -115,5 +115,5 @@
   ],
   "debug": true,
   "multimodel": true,
-  "json": true
+  "json": false
 }

@@ -921,14 +921,14 @@ func formatMeta(meta LLMResponseMeta) string {
 // It reads configuration from config.json, optionally switches to multimodel
 // mode, and blocks until the UI exits. It logs diagnostic output to debug.log
 // when enabled. StartGUI does not return a value.
-func StartGUI() {
+func StartGUI(configPath string) {
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {
 		log.Fatalf("could not open log file: %v", err)
 	}
 	defer f.Close()
 
-	cfg, err := loadConfig("config.json")
+	cfg, err := loadConfig(configPath)
 	if err != nil {
 		log.Fatalf("Failed to start: %v", err)
 	}
