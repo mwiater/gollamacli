@@ -114,6 +114,6 @@
     }
   ],
   "debug": true,
-  "multimodel": true
-  
+  "multimodel": true,
+  "json": false
 }

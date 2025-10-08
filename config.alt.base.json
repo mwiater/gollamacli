@@ -6,7 +6,7 @@
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
-        "granite3.3:2b",
+        "granite4:micro",
         "gemma3n:e2b",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
@@ -34,7 +34,7 @@
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
-        "granite3.3:2b",
+        "granite4:micro",
         "gemma3n:e2b",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
@@ -62,7 +62,7 @@
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
-        "granite3.3:2b",
+        "granite4:micro",
         "gemma3n:e2b",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
@@ -90,7 +90,7 @@
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
-        "granite3.3:2b",
+        "granite4:micro",
         "gemma3n:e2b",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
@@ -114,6 +114,6 @@
     }
   ],
   "debug": true,
-  "multimodel": true
-  
+  "multimodel": true,
+  "json": false
 }
