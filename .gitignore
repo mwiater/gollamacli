@@ -1,4 +1,3 @@
+.coverage/*
 dist/*
-config.json
-config.json.alt
 debug.log
