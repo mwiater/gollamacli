@@ -93,8 +93,13 @@ func (h *OllamaHost) GetModels() []string {
 
 // loadConfig reads and parses the configuration file.
 func loadConfig() (Config, error) {
+	return loadConfigFromPath(configFile)
+}
+
+// loadConfigFromPath reads and parses the configuration file from the given path.
+func loadConfigFromPath(path string) (Config, error) {
 	var config Config
-	file, err := os.Open(configFile)
+	file, err := os.Open(path)
 	if err != nil {
 		return config, err
 	}

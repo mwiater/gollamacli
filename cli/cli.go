@@ -611,7 +611,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selectedHost = m.config.Hosts[m.hostList.Index()]
 				m.isLoading = true
 				m.requestStartTime = time.Now()
-				m.err = nil
 				cmds = append(cmds, m.spinner.Tick, fetchAndSelectModelsCmd(m.selectedHost, m.client), tickCmd())
 			}
 		}
@@ -674,16 +673,23 @@ func (m *model) View() string {
 	switch m.state {
 	case viewHostSelector, viewModelSelector:
 		var listModel list.Model
+		var title string
 		if m.state == viewHostSelector {
 			listModel = m.hostList
+			title = m.hostList.Title
 		} else {
 			listModel = m.modelList
+			title = m.modelList.Title
 		}
 		if m.isLoading {
 			timer := fmt.Sprintf("%.1f", time.Since(m.requestStartTime).Seconds())
 			return fmt.Sprintf("\n  %s Fetching models... %ss\n", m.spinner.View(), timer)
 		}
-		return lipgloss.NewStyle().Margin(1, 2).Render(listModel.View())
+		listView := listModel.View()
+		if title != "" && !strings.Contains(listView, title) {
+			listView = fmt.Sprintf("%s\n\n%s", title, listView)
+		}
+		return lipgloss.NewStyle().Margin(1, 2).Render(listView)
 
 	case viewLoadingChat:
 		timer := fmt.Sprintf("%.1f", time.Since(m.requestStartTime).Seconds())

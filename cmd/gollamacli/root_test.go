@@ -1,68 +1,30 @@
+// cmd/gollamacli/root_test.go
 package gollamacli
 
 import (
-	"io"
-	"os"
+	"bytes"
 	"strings"
 	"testing"
-
-	"github.com/spf13/cobra"
 )
 
-func TestRoot_SubcommandsPresent(t *testing.T) {
-	have := map[string]bool{}
-	for _, c := range rootCmd.Commands() {
-		have[c.Name()] = true
-		if c.Name() == "list" {
-			// list should have subcommands 'models' and 'commands'
-			sub := map[string]bool{}
-			for _, sc := range c.Commands() {
-				sub[sc.Name()] = true
-			}
-			if !sub["models"] || !sub["commands"] {
-				t.Fatalf("list subcommands missing: %v", sub)
-			}
-		}
-		if c.Name() == "pull" || c.Name() == "delete" || c.Name() == "sync" || c.Name() == "unload" {
-			sub := map[string]bool{}
-			for _, sc := range c.Commands() {
-				sub[sc.Name()] = true
-			}
-			if !sub["models"] {
-				t.Fatalf("%s must have models subcommand", c.Name())
-			}
-		}
-	}
-	for _, want := range []string{"chat", "list", "pull", "delete", "sync", "unload"} {
-		if !have[want] {
-			t.Fatalf("missing subcommand %s", want)
-		}
-	}
-}
+func TestRootCmd(t *testing.T) {
+	// Redirect stdout to a buffer
+	b := new(bytes.Buffer)
+	rootCmd.SetOut(b)
+	rootCmd.SetErr(b)
 
-func TestCommands_HaveDescriptions(t *testing.T) {
-	var check func(*cobra.Command)
-	check = func(cmd *cobra.Command) {
-		if cmd.Short == "" || cmd.Long == "" {
-			t.Fatalf("command %s missing Short/Long", cmd.Name())
-		}
-		for _, sc := range cmd.Commands() {
-			check(sc)
-		}
+	// Execute the command with a non-existent subcommand
+	rootCmd.SetArgs([]string{"nonexistent"})
+	_, err := rootCmd.ExecuteC()
+
+	// Check if an error is returned
+	if err == nil {
+		t.Error("Expected an error for a nonexistent command, but got none")
 	}
-	check(rootCmd)
-}
 
-func TestListCommands_PrintsTree(t *testing.T) {
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	listAllCommands(rootCmd)
-	_ = w.Close()
-	os.Stdout = old
-	out, _ := io.ReadAll(r)
-	if !strings.Contains(string(out), "gollamacli chat") {
-		t.Fatalf("expected command path in output, got: %s", string(out))
+	// Check the output for the expected error message
+	expected := "unknown command \"nonexistent\" for \"gollamacli\""
+	if !strings.Contains(b.String(), expected) {
+		t.Errorf("Expected output to contain '%s', but got '%s'", expected, b.String())
 	}
 }

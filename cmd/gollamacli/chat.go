@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+var startGUI = cli.StartGUI
+
 // Declare a variable to store the config file path.
 // This is not strictly necessary if you only access via viper,
 // but it's common practice with StringVar.
@@ -19,7 +21,7 @@ var chatCmd = &cobra.Command{
 	Long:  `The 'chat' command starts an interactive chat session with a large language model.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		configPath := viper.GetString("config")
-		cli.StartGUI(configPath)
+		startGUI(configPath)
 	},
 }
 

@@ -306,7 +306,7 @@ func (m *multimodelModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "esc":
+		case "ctrl+c":
 			return m, tea.Quit
 		case "tab":
 			if m.state == multimodelViewChat {
@@ -435,6 +435,7 @@ func (m *multimodelModel) updateAssignment(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "esc":
 				m.inModelSelection = false
+				return m, nil
 			}
 		}
 	} else {
