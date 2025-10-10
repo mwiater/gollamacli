@@ -2,6 +2,8 @@
 
 `gollamacli` is a terminal-first companion for interacting with large language models that expose the Ollama API. It helps you browse available hosts, launch an immersive chat session, and keep model inventories aligned across machines, whether you are experimenting locally or coordinating a distributed cluster.
 
+![Alt text](.screens/multichat_01.png?raw=true "Multichat")
+
 ## Feature Highlights
 - **Multiple host management** – Define any number of Ollama hosts in `config.json`, switch between them instantly, and keep connection details in one place.
 - **Interactive chat interface** – Drive a focused terminal UI for conversational work with the model you select.
