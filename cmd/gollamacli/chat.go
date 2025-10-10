@@ -29,7 +29,7 @@ func init() {
 
 	// 2. Define the string flag 'config'
 	// StringVarP: Target variable, Flag name, Shorthand (e.g., "c"), Default value, Description
-	chatCmd.Flags().StringVarP(&cfgFile, "config", "c", "config.json", "config file (e.g., /etc/config.yaml)")
+	chatCmd.Flags().StringVarP(&cfgFile, "config", "c", "config.json", "config file (e.g., config.Authors.json)")
 
 	// 3. Bind the Cobra flag to Viper
 	// The key in viper will be "config"
