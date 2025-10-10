@@ -169,7 +169,6 @@ go test ./...
 Produce a coverage profile and summary:
 
 ```bash
-mkdir -p .coverage
 go clean -testcache
 go test ./... -coverprofile=.coverage/coverage.out
 go tool cover -func=.coverage/coverage.out
