@@ -8,6 +8,7 @@
         "stablelm-zephyr:3b",
         "granite4:micro",
         "gemma3n:e2b",
+        "gemma3:270m",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
         "granite3.1-moe:1b",
@@ -36,6 +37,7 @@
         "stablelm-zephyr:3b",
         "granite4:micro",
         "gemma3n:e2b",
+        "gemma3:270m",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
         "granite3.1-moe:1b",
@@ -57,20 +59,21 @@
       }
     },
     {
-      "name": "Jane_Austen",
+      "name": "David_Sedaris",
       "url": "https://o-udoo03.0nezer0.com",
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
         "granite4:micro",
         "gemma3n:e2b",
+        "gemma3:270m",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
         "granite3.1-moe:1b",
         "dolphin-phi:2.7b",
         "qwen3:1.7b"
       ],
-      "systemprompt": "You are Jane Austen. Write in her formal, witty, and satirical style. Use complex syntax, third-person omniscient narration, and focus on social commentary and manners. Be prim and proper.",
+      "systemprompt": "You are David Sedaris. Write a humorous, first-person memoir. Be self-deprecating, witty, highly conversational, and focus on the absurdity of everyday human behavior.",
       "parameters": {
         "top_k": 40,
         "top_p": 0.9,
@@ -85,20 +88,21 @@
       }
     },
     {
-      "name": "Ernest_Hemingway",
+      "name": "Elmore_Leonard",
       "url": "https://o-udoo04.0nezer0.com",
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
         "granite4:micro",
         "gemma3n:e2b",
+        "gemma3:270m",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
         "granite3.1-moe:1b",
         "dolphin-phi:2.7b",
         "qwen3:1.7b"
       ],
-      "systemprompt": "You are Ernest Hemingway. Write using his terse, minimalist style. Use short, declarative sentences. Avoid adjectives and complex structures. Focus on action, dialogue, and plain, unadorned truth.",
+      "systemprompt": "You are Elmore Leonard. Write short, punchy prose. Focus on realistic, stylized dialogue and character interaction. Keep descriptive passages to a minimum. Never use a word other than 'said' for dialogue attribution.",
       "parameters": {
         "top_k": 40,
         "top_p": 0.9,

@@ -2,8 +2,6 @@
 
 `gollamacli` is a terminal-first companion for interacting with large language models that expose the Ollama API. It helps you browse available hosts, launch an immersive chat session, and keep model inventories aligned across machines, whether you are experimenting locally or coordinating a distributed cluster.
 
-![Alt text](.screens/multichat_01.png?raw=true "Multichat")
-
 ## Feature Highlights
 - **Multiple host management** – Define any number of Ollama hosts in `config.json`, switch between them instantly, and keep connection details in one place.
 - **Interactive chat interface** – Drive a focused terminal UI for conversational work with the model you select.
@@ -11,6 +9,22 @@
 - **Model synchronization** – Use a single command to pull models that are missing from a host and prune those not listed in configuration.
 - **Comprehensive model tooling** – List, pull, delete, unload, and otherwise manage models without leaving the CLI.
 - **Debug instrumentation** – Surface timing, token counts, and other diagnostics whenever you need deeper performance insight.
+
+#### Singlechat Mode
+
+Normal chat mode, displays model information, parameters, and response metrics.
+
+![Alt text](.screens/singlechat_01.png?raw=true "Singlechat Mode")
+
+#### Multichat Mode
+
+Send the same user prompt to up to 4 different Ollama hosts
+* <b>Model Comparison:</b> Set each host to a different model and compare with the same user prompt.
+* <b>System Prompt Comparison:</b> Set the host models to the same model, and compare various system prompts with the same user prompt.
+<b>Parameter Comparison:</b> Set the host models to the same model and the same system prompt, and compare various model parameter settings.
+* <em>Or mix and match!</em>
+
+![Alt text](.screens/multichat_01.png?raw=true "Multichat Mode")
 
 ## Requirements
 - Go toolchain installed (the project targets recent Go releases).
@@ -28,6 +42,8 @@ The resulting binary will be placed in your Go bin directory (e.g., `$GOPATH/bin
 ## Configuration
 `gollamacli` reads its settings from a JSON document. Place `config.json` alongside the executable (or point to the file with `--config` at runtime). At minimum you must define one host.
 
+Example with custom config: `gollamacli --config config.Authors.json`
+
 ### Example `config.json`
 ```json
 {
@@ -38,8 +54,9 @@ The resulting binary will be placed in your Go bin directory (e.g., `$GOPATH/bin
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
-        "granite3.3:2b",
+        "granite4:micro",
         "gemma3n:e2b",
+        "gemma3:270m",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
         "granite3.1-moe:1b",
@@ -53,8 +70,9 @@ The resulting binary will be placed in your Go bin directory (e.g., `$GOPATH/bin
       "type": "ollama",
       "models": [
         "stablelm-zephyr:3b",
-        "granite3.3:2b",
+        "granite4:micro",
         "gemma3n:e2b",
+        "gemma3:270m",
         "deepseek-r1:1.5b",
         "llama3.2:1b",
         "granite3.1-moe:1b",
