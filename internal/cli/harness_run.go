@@ -4,7 +4,7 @@ package gollamacli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/mwiater/gollamacli/harness"
+	"github.com/mwiater/gollamacli/internal/harness"
 )
 
 // harnessRunCmd

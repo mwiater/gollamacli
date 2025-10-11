@@ -20,7 +20,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/mwiater/gollamacli/models"
+	"github.com/mwiater/gollamacli/internal/models"
 )
 
 // Config contains application settings that drive the CLI/TUI behavior.

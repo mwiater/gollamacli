@@ -2,7 +2,7 @@
 package main
 
 import (
-	cmd "github.com/mwiater/gollamacli/cmd/gollamacli"
+	cmd "github.com/mwiater/gollamacli/internal/cli"
 )
 
 // main starts the gollamacli CLI application by delegating to the

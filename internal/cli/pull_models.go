@@ -2,7 +2,7 @@
 package gollamacli
 
 import (
-	"github.com/mwiater/gollamacli/models"
+	"github.com/mwiater/gollamacli/internal/models"
 	"github.com/spf13/cobra"
 )
 
